@@ -123,6 +123,34 @@ def check_e103(text_element):
     )
 
 
+@error_code
+def check_e104(text_element):
+
+    pattern = r'([(\uff08])\d+([)\uff09])'
+    content = text_element.content
+    m = re.search(pattern, content)
+    if not m:
+        return False
+
+    if m.group(1) != '(' or m.group(2) != ')':
+        return m.group(0)
+
+    i = m.start()
+    if i == 0:
+        return False
+    i -= 1
+
+    c = 0
+    while i >= 0 and content[i] in (' ', '\n'):
+        i -= 1
+        c += 1
+
+    if c != 1:
+        return content[max(0, i):m.end()]
+    else:
+        return False
+
+
 def check_error(text_element):
 
     BLOCK_LEVEL_CHECKING = [

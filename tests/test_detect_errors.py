@@ -10,6 +10,7 @@ from zh_doclint.detect_errors import (
     check_e101,
     check_e102,
     check_e103,
+    check_e104,
 )
 
 
@@ -212,3 +213,48 @@ def test_e103():
         '42℃',
     )
     assert check_e103(te)
+
+
+def test_e104():
+
+    te = TextElement(
+        '', '1', '2',
+        '(42）',
+    )
+    assert not check_e104(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '（42)',
+    )
+    assert not check_e104(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '（42）',
+    )
+    assert not check_e104(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42(42)',
+    )
+    assert not check_e104(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42  (42)',
+    )
+    assert not check_e104(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42 (42)',
+    )
+    assert check_e104(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42\n(42)',
+    )
+    assert check_e104(te)
