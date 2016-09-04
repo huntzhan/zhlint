@@ -6,6 +6,7 @@ from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
 import re
+from operator import methodcaller
 
 
 ERRORS = {
@@ -64,30 +65,38 @@ def check_on_patterns(patterns, content):
     return False
 
 
-@error_code
-def check_e101(text_element):
+def generate_space_related_patterns(a, b):
 
     # 1. no space.
     # prefix check.
-    p11 = r'[\u4e00-\u9fff][a-zA-z]'
+    p11 = '{0}{1}'
     # suffix check.
-    p12 = r'[a-zA-z][\u4e00-\u9fff]'
+    p12 = '{1}{0}'
 
     # 2. more than one whitespaces.
     # prefix check.
-    p21 = r'[\u4e00-\u9fff]\s{2,}[a-zA-z]'
+    p21 = '{0}\s{{2,}}{1}'
     # suffix check.
-    p22 = r'[a-zA-z]\s{2,}[\u4e00-\u9fff]'
+    p22 = '{1}\s{{2,}}{0}'
 
     # 3. wrong single whitespace: [\t\r\f\v]
     # only allow ' ' and '\n'.
     # prefix check.
-    p31 = r'[\u4e00-\u9fff](?=[^ \n])\s{1}[a-zA-z]'
+    p31 = '{0}(?![ \n])\s{{1}}{1}'
     # suffix check.
-    p32 = r'[a-zA-z](?=[^ \n])\s{1}[\u4e00-\u9fff]'
+    p32 = '{1}(?![ \n])\s{{1}}{0}'
+
+    return list(map(
+        methodcaller('format', a, b),
+        [p11, p12, p21, p22, p31, p32],
+    ))
+
+
+@error_code
+def check_e101(text_element):
 
     return check_on_patterns(
-        [p11, p12, p21, p22, p31, p32],
+        generate_space_related_patterns('[\u4e00-\u9fff]', '[a-zA-z]'),
         text_element.content,
     )
 
@@ -95,27 +104,21 @@ def check_e101(text_element):
 @error_code
 def check_e102(text_element):
 
-    # 1. no space.
-    # prefix check.
-    p11 = r'[\u4e00-\u9fff]\d'
-    # suffix check.
-    p12 = r'\d[\u4e00-\u9fff]'
+    return check_on_patterns(
+        generate_space_related_patterns('[\u4e00-\u9fff]', '\d'),
+        text_element.content,
+    )
 
-    # 2. more than one whitespaces.
-    # prefix check.
-    p21 = r'[\u4e00-\u9fff]\s{2,}\d'
-    # suffix check.
-    p22 = r'\d\s{2,}[\u4e00-\u9fff]'
 
-    # 3. wrong single whitespace: [\t\r\f\v]
-    # only allow ' ' and '\n'.
-    # prefix check.
-    p31 = r'[\u4e00-\u9fff](?=[^ \n])\s{1}\d'
-    # suffix check.
-    p32 = r'\d(?=[^ \n])\s{1}[\u4e00-\u9fff]'
+@error_code
+def check_e103(text_element):
 
     return check_on_patterns(
-        [p11, p12, p21, p22, p31, p32],
+        generate_space_related_patterns(
+            '\d',
+            # non-digit, non-chinese, ％, ℃, x, n.
+            '(?!\d|[\u4e00-\u9fff]|\s)[^\uff05\u2103xn\%]',
+        ),
         text_element.content,
     )
 

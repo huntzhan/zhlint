@@ -9,6 +9,7 @@ from zh_doclint.preprocessor import TextElement
 from zh_doclint.detect_errors import (
     check_e101,
     check_e102,
+    check_e103,
 )
 
 
@@ -124,3 +125,90 @@ def test_e102():
         '42\n中文',
     )
     assert check_e102(te)
+
+
+def test_e103():
+
+    te = TextElement(
+        '', '1', '2',
+        'μ42',
+    )
+    assert not check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42μ',
+    )
+    assert not check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'μ  42',
+    )
+    assert not check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42  μ',
+    )
+    assert not check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'μ\t42',
+    )
+    assert not check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'μ 42',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42 μ',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'μ\n42',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42\nμ',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42x',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42n',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42％',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42%',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42℃',
+    )
+    assert check_e103(te)
