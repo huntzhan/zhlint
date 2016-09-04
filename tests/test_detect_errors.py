@@ -11,6 +11,7 @@ from zh_doclint.detect_errors import (
     check_e102,
     check_e103,
     check_e104,
+    check_e203,
 )
 
 
@@ -258,3 +259,48 @@ def test_e104():
         '42\n(42)',
     )
     assert check_e104(te)
+
+
+def test_e203():
+
+    te = TextElement(
+        '', '1', '2',
+        '中文， 测试',
+    )
+    assert not check_e203(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文 。测试',
+    )
+    assert not check_e203(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '「 中文」',
+    )
+    assert not check_e203(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文，测试',
+    )
+    assert check_e203(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文；测试',
+    )
+    assert check_e203(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '「中文」',
+    )
+    assert check_e203(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文！\n测试',
+    )
+    assert check_e203(te)

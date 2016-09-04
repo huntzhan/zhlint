@@ -65,7 +65,7 @@ def check_on_patterns(patterns, content):
     return False
 
 
-def generate_space_related_patterns(a, b):
+def single_space_patterns(a, b):
 
     # 1. no space.
     # prefix check.
@@ -92,11 +92,24 @@ def generate_space_related_patterns(a, b):
     ))
 
 
+def no_space_patterns(a, b):
+
+    # prefix check.
+    p1 = '{0}((?!\n)\s)+{1}'
+    # suffix check.
+    p2 = '{1}((?!\n)\s)+{0}'
+
+    return list(map(
+        methodcaller('format', a, b),
+        [p1, p2],
+    ))
+
+
 @error_code
 def check_e101(text_element):
 
     return check_on_patterns(
-        generate_space_related_patterns('[\u4e00-\u9fff]', '[a-zA-z]'),
+        single_space_patterns('[\u4e00-\u9fff]', '[a-zA-z]'),
         text_element.content,
     )
 
@@ -105,7 +118,7 @@ def check_e101(text_element):
 def check_e102(text_element):
 
     return check_on_patterns(
-        generate_space_related_patterns('[\u4e00-\u9fff]', '\d'),
+        single_space_patterns('[\u4e00-\u9fff]', '\d'),
         text_element.content,
     )
 
@@ -114,7 +127,7 @@ def check_e102(text_element):
 def check_e103(text_element):
 
     return check_on_patterns(
-        generate_space_related_patterns(
+        single_space_patterns(
             '\d',
             # non-digit, non-chinese, ％, ℃, x, n.
             '(?!\d|[\u4e00-\u9fff]|\s)[^\uff05\u2103xn\%]',
@@ -149,6 +162,29 @@ def check_e104(text_element):
         return content[max(0, i):m.end()]
     else:
         return False
+
+
+@error_code
+def check_e203(text_element):
+
+    zh_symbols = (
+        '['
+        '\u3000-\u303f'
+        '\uff00-\uff0f'
+        '\uff1a-\uff20'
+        '\uff3b-\uff40'
+        '\uff5b-\uff64'
+        '\uffe0-\uffee'
+        ']'
+    )
+
+    return check_on_patterns(
+        no_space_patterns(
+            zh_symbols,
+            '(?!{0}|\s).'.format(zh_symbols),
+        ),
+        text_element.content,
+    )
 
 
 def check_error(text_element):
