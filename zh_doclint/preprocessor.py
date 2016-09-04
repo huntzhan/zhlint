@@ -35,6 +35,10 @@ TextElement = namedtuple(
 )
 
 
+def split_text_element(text_element):
+    pass
+
+
 def generate_text_elements(text):
     MARK_PATTERN = (
         '<<DOCLINT: TYPE=(.+?), LOC_BEGIN=(\d+), LOC_END=(\d+)>>\n'
