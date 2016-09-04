@@ -11,10 +11,10 @@ import re
 ERRORS = {
     # space.
     'E101': '英文与非标点的中文之间需要有一个空格',
-    'E102': '数字与非标点的中文之间需要有一个空格，'
-            '除了「％」、「°C」、以及倍数单位（如 2x、3n）之外，'
+    'E102': '数字与非标点的中文之间需要有一个空格',
+    'E103': '除了「％」、「°C」、以及倍数单位（如 2x、3n）之外，'
             '其余数字与单位之间需要加空格',
-    'E103': '书写时括号中全为数字，则括号用半角括号且首括号前要空一格',
+    'E104': '书写时括号中全为数字，则括号用半角括号且首括号前要空一格',
 
     # punctuation.
     'E201': '只有中文或中英文混排中，一律使用中文全角标点',
@@ -30,30 +30,30 @@ ERRORS = {
 }
 
 
-def error_code(code):
+def error_code(func):
     ERROR_TEMPLATE = (
         'Line {1}-{2},\n'
         '{0}: {3},\n'
         'Detected: {4}\n'
     )
 
-    def decorator(func):
-        def wrapper(text_element):
+    code = func.__name__[-4:].upper()
 
-            detected = func(text_element)
-            if detected:
-                log = ERROR_TEMPLATE.format(
-                    code,
-                    text_element.loc_begin, text_element.loc_end,
-                    ERRORS[code],
-                    detected,
-                )
-                print(log)
-                return False
-            return True
+    def wrapper(text_element):
 
-        return wrapper
-    return decorator
+        detected = func(text_element)
+        if detected:
+            log = ERROR_TEMPLATE.format(
+                code,
+                text_element.loc_begin, text_element.loc_end,
+                ERRORS[code],
+                detected,
+            )
+            print(log)
+            return False
+        return True
+
+    return wrapper
 
 
 def check_on_patterns(patterns, content):
@@ -64,8 +64,9 @@ def check_on_patterns(patterns, content):
     return False
 
 
-@error_code('E101')
+@error_code
 def check_e101(text_element):
+
     # 1. no space.
     # prefix check.
     p11 = r'[\u4e00-\u9fff][a-zA-z]'
@@ -91,16 +92,47 @@ def check_e101(text_element):
     )
 
 
+@error_code
+def check_e102(text_element):
+
+    # 1. no space.
+    # prefix check.
+    p11 = r'[\u4e00-\u9fff]\d'
+    # suffix check.
+    p12 = r'\d[\u4e00-\u9fff]'
+
+    # 2. more than one whitespaces.
+    # prefix check.
+    p21 = r'[\u4e00-\u9fff]\s{2,}\d'
+    # suffix check.
+    p22 = r'\d\s{2,}[\u4e00-\u9fff]'
+
+    # 3. wrong single whitespace: [\t\r\f\v]
+    # only allow ' ' and '\n'.
+    # prefix check.
+    p31 = r'[\u4e00-\u9fff](?=[^ \n])\s{1}\d'
+    # suffix check.
+    p32 = r'\d(?=[^ \n])\s{1}[\u4e00-\u9fff]'
+
+    return check_on_patterns(
+        [p11, p12, p21, p22, p31, p32],
+        text_element.content,
+    )
+
+
 def check_error(text_element):
 
     BLOCK_LEVEL_CHECKING = [
         'E101',
         'E102',
         'E103',
+        'E104',
+
         'E203',
         'E205',
         'E206',
         'E207',
+
         'E301',
     ]
     for error_code in BLOCK_LEVEL_CHECKING:
