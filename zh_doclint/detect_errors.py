@@ -82,7 +82,7 @@ def check_on_patterns(patterns, content):
     return False
 
 
-def single_space_patterns(a, b):
+def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
 
     # 1. no space.
     # prefix check.
@@ -103,9 +103,23 @@ def single_space_patterns(a, b):
     # suffix check.
     p32 = '{1}(?![ \n])\s{{1}}{0}'
 
+    patterns = []
+    if a_join_b:
+        patterns.extend([
+            p11,
+            p21,
+            p31,
+        ])
+    if b_join_a:
+        patterns.extend([
+            p12,
+            p22,
+            p32,
+        ])
+
     return list(map(
         methodcaller('format', a, b),
-        [p11, p12, p21, p22, p31, p32],
+        patterns,
     ))
 
 
@@ -150,6 +164,7 @@ def check_e103(text_element):
             '(?!\d|{0}|{1}|\s)[^\uff05\u2103xn\%]'.format(
                 ZH_CHARACTERS, ZH_SYMBOLS,
             ),
+            b_join_a=False,
         ),
         text_element.content,
     )

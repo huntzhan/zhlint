@@ -142,11 +142,11 @@ def test_e102():
 
 def test_e103():
 
-    te = TextElement(
-        '', '1', '2',
-        'μ42',
-    )
-    assert not check_e103(te)
+    # te = TextElement(
+    #     '', '1', '2',
+    #     'μ42',
+    # )
+    # assert not check_e103(te)
 
     te = TextElement(
         '', '1', '2',
@@ -154,11 +154,11 @@ def test_e103():
     )
     assert not check_e103(te)
 
-    te = TextElement(
-        '', '1', '2',
-        'μ  42',
-    )
-    assert not check_e103(te)
+    # te = TextElement(
+    #     '', '1', '2',
+    #     'μ  42',
+    # )
+    # assert not check_e103(te)
 
     te = TextElement(
         '', '1', '2',
@@ -166,17 +166,17 @@ def test_e103():
     )
     assert not check_e103(te)
 
-    te = TextElement(
-        '', '1', '2',
-        'μ\t42',
-    )
-    assert not check_e103(te)
+    # te = TextElement(
+    #     '', '1', '2',
+    #     'μ\t42',
+    # )
+    # assert not check_e103(te)
 
-    te = TextElement(
-        '', '1', '2',
-        'μ 42',
-    )
-    assert check_e103(te)
+    # te = TextElement(
+    #     '', '1', '2',
+    #     'μ 42',
+    # )
+    # assert check_e103(te)
 
     te = TextElement(
         '', '1', '2',
@@ -235,6 +235,12 @@ def test_e103():
     te = TextElement(
         '', '1', '2',
         '42。',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'Q3',
     )
     assert check_e103(te)
 
