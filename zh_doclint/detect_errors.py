@@ -387,7 +387,13 @@ def check_e201(text_element):
 
 @error_code
 def check_e202(text_element):
-    pass
+    if contains_chinese_characters(text_element.content):
+        return False
+
+    return check_on_patterns(
+        [ZH_SYMBOLS],
+        text_element,
+    )
 
 
 @error_code

@@ -22,6 +22,7 @@ from zh_doclint.detect_errors import (
 
     split_text_element,
     check_e201,
+    check_e202,
 )
 
 
@@ -528,3 +529,18 @@ def test_e201():
         'pure english, nothing wrong.',
     )
     assert check_e201(te)
+
+
+def test_e202():
+
+    te = TextElement(
+        '', '1', '2',
+        'pure english，nothing wrong.',
+    )
+    assert not check_e202(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'pure english, nothing wrong.',
+    )
+    assert check_e202(te)
