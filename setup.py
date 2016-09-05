@@ -59,7 +59,7 @@ setup(
     install_requires=load_requirements('requirements.txt'),
     entry_points={
         'console_scripts': [
-            'zh_doclint_cli = zh_doclint.main:entry_point'
+            'zh-doclint = zh_doclint.main:entry_point'
         ],
     },
 )

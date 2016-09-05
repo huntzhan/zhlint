@@ -271,3 +271,9 @@ def check_block_level_error(text_element):
         _ret = checker(text_element)
         ret = ret and _ret
     return ret
+
+
+def detect_errors(text_element):
+    _r1 = check_block_level_error(text_element)
+    _r2 = True
+    return _r1 and _r2
