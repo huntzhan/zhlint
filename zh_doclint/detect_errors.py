@@ -190,12 +190,14 @@ def check_on_callback(callback, text_element):
         return styles
 
 
-def check_on_patterns(patterns, text_element):
+def check_on_patterns(patterns, text_element, ignore_matches=set()):
 
     def patterns_callback(text_element):
 
         for pattern in patterns:
             for m in re.finditer(pattern, text_element.content, re.UNICODE):
+                if m.group(0) in ignore_matches:
+                    continue
                 yield m.start(), m.end()
 
     return check_on_callback(patterns_callback, text_element)
@@ -378,10 +380,11 @@ def check_e201(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
 
-    p = '[!-/:-@\[-`\{-~]'
+    p = '[!-/:-@\[-`\{-~]+'
     return check_on_patterns(
         [p],
         text_element,
+        ignore_matches=set(['......']),
     )
 
 
@@ -398,7 +401,24 @@ def check_e202(text_element):
 
 @error_code
 def check_e204(text_element):
-    pass
+    if not contains_chinese_characters(text_element.content):
+        return False
+
+    p = (
+        "'"
+        '|'
+        '"'
+        '|'
+        # ‘’
+        '\u2018|\u2019'
+        '|'
+        # “”
+        '\u201c|\u201d'
+    )
+    return check_on_patterns(
+        [p],
+        text_element,
+    )
 
 
 @error_code

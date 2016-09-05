@@ -23,6 +23,7 @@ from zh_doclint.detect_errors import (
     split_text_element,
     check_e201,
     check_e202,
+    check_e204,
 )
 
 
@@ -526,6 +527,12 @@ def test_e201():
 
     te = TextElement(
         '', '1', '2',
+        '有中文，正确......',
+    )
+    assert check_e201(te)
+
+    te = TextElement(
+        '', '1', '2',
         'pure english, nothing wrong.',
     )
     assert check_e201(te)
@@ -544,3 +551,36 @@ def test_e202():
         'pure english, nothing wrong.',
     )
     assert check_e202(te)
+
+
+def test_e204():
+
+    te = TextElement(
+        '', '1', '2',
+        "中文'测试'",
+    )
+    assert not check_e204(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文"测试"',
+    )
+    assert not check_e204(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文‘测试’',
+    )
+    assert not check_e204(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文“测试”',
+    )
+    assert not check_e204(te)
+
+    te = TextElement(
+        '', '1', '2',
+        "中文「测试」",
+    )
+    assert check_e204(te)
