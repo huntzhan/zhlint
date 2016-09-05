@@ -7,7 +7,7 @@ from future.builtins.disabled import *  # noqa
 
 from os.path import expanduser
 
-from docopt import docopt
+import click
 
 from zh_doclint.metadata import VERSION
 from zh_doclint.preprocessor import transform
@@ -20,16 +20,14 @@ def load_file(fpath):
         return fin.read()
 
 
-_DOC = '''
-Usage:
-    zh-doclint <file>
-'''
+click.disable_unicode_literals_warning = True
 
 
-def entry_point():
-    kwargs = docopt(_DOC, version=VERSION)
+@click.command()
+@click.version_option(VERSION)
+@click.argument('fpath')
+def entry_point(fpath):
 
-    fpath = kwargs['<file>']
     ret = True
     for text_element in transform(load_file(fpath)):
         _ret = detect_errors(text_element)

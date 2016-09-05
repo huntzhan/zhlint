@@ -8,6 +8,8 @@ from future.builtins.disabled import *  # noqa
 import re
 from operator import methodcaller
 
+import click
+
 
 ERRORS = {
     # space.
@@ -46,23 +48,43 @@ ZH_SYMBOLS = (
 )
 
 
+def split_bar(symbol, offset, *texts):
+    length = offset
+    for text in texts:
+        for c in text:
+            if 0 <= ord(c) <= 127:
+                length += 1
+            else:
+                length += 2
+    length = int(length)
+
+    return click.style(symbol * length)
+
+
 def error_code(func):
-    ERROR_TEMPLATE = (
-        '{0}: {1}\n'
-        '{2}\n'
-    )
 
     code = func.__name__[-4:].upper()
 
+    def display(body):
+        header = [
+            split_bar('=', 2, code, ERRORS[code]),
+            click.style('\n'),
+            click.style(code, fg='green', bold=True),
+            click.style(': '),
+            click.style(ERRORS[code]),
+            click.style('\n'),
+            split_bar('=', 2, code, ERRORS[code]),
+            click.style('\n'),
+        ]
+        for style in header + body:
+            click.echo(style, nl=False)
+        click.echo('\n', nl=False)
+
     def wrapper(text_element):
 
-        detected = func(text_element)
-        if detected:
-            log = ERROR_TEMPLATE.format(
-                code, ERRORS[code],
-                detected,
-            )
-            print(log)
+        body = func(text_element)
+        if body:
+            display(body)
             return False
         return True
 
@@ -99,12 +121,12 @@ def check_on_callback(callback, text_element):
             c += 1
         rj = max(rj - 1, j)
 
-        display_line = content[ri:rj]
+        text_line = content[ri:rj]
         i = i - ri
         j = j - ri
 
         for c in ['\t', '\n']:
-            for m in re.finditer(c, display_line):
+            for m in re.finditer(c, text_line):
                 ci = m.start()
                 if ci < i:
                     i += 5
@@ -112,25 +134,25 @@ def check_on_callback(callback, text_element):
                 elif ci < j:
                     j += 5
 
-            display_line = display_line.replace(
+            text_line = text_line.replace(
                 c,
                 ' [{0}] '.format(repr(c)[2:-1]),
             )
 
         mark_line = []
-        for c in display_line[:i]:
+        for c in text_line[:i]:
             if 0 <= ord(c) <= 127:
                 mark_line.append(' ')
             else:
                 mark_line.append('\u3000')
-        for c in display_line[i:j]:
+        for c in text_line[i:j]:
             if 0 <= ord(c) <= 127:
                 mark_line.append('-')
             else:
                 mark_line.append('\uff0d')
         mark_line = ''.join(mark_line)
 
-        return '{0}\n{1}'.format(display_line, mark_line)
+        return text_line, mark_line
 
     loc_detected = []
     for i, j in callback(text_element):
@@ -141,25 +163,29 @@ def check_on_callback(callback, text_element):
     if not loc_detected:
         return False
     else:
-        lines = []
+        styles = []
         for i, j in sorted(loc_detected):
             loc = get_loc(i, j)
-            detected = generate_detected_text(i, j)
+            text_line, mark_line = generate_detected_text(i, j)
 
             if loc[0] == loc[1]:
                 loc_text = str(loc[0])
             else:
                 loc_text = '{0}-{1}'.format(*map(str, loc))
 
-            lines.append(
-                'LINE: {0}\n{1}'.format(
-                    loc_text, detected,
-                ),
-            )
-            lines.append(
-                '------------------------------------------',
-            )
-        return '\n'.join(lines)
+            styles.extend([
+                click.style('LINE', fg='green', bold=True),
+                click.style(': ', fg='white'),
+                click.style(loc_text, fg='red'),
+                click.style('\n'),
+                click.style(text_line, fg='yellow'),
+                click.style('\n'),
+                click.style(mark_line, fg='red', bold=True),
+                click.style('\n'),
+                split_bar('.', 0, text_line),
+                click.style('\n'),
+            ])
+        return styles
 
 
 def check_on_patterns(patterns, text_element):
