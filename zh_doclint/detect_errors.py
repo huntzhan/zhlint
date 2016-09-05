@@ -369,6 +369,32 @@ def check_e207(text_element):
     )
 
 
+def contains_chinese_characters(content):
+    return re.search(ZH_CHARACTERS, content, re.UNICODE)
+
+
+@error_code
+def check_e201(text_element):
+    if not contains_chinese_characters(text_element.content):
+        return False
+
+    p = '[!-/:-@\[-`\{-~]'
+    return check_on_patterns(
+        [p],
+        text_element,
+    )
+
+
+@error_code
+def check_e202(text_element):
+    pass
+
+
+@error_code
+def check_e204(text_element):
+    pass
+
+
 @error_code
 def check_e301(text_element):
 

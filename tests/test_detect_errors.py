@@ -19,7 +19,9 @@ from zh_doclint.detect_errors import (
     check_e207,
     check_e301,
     check_block_level_error,
+
     split_text_element,
+    check_e201,
 )
 
 
@@ -505,3 +507,24 @@ i？'''
     )
     lines = help_('content', te)
     assert len(lines) == 9
+
+
+def test_e201():
+
+    te = TextElement(
+        '', '1', '2',
+        '有中文, 错误.',
+    )
+    assert not check_e201(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '有中文，正确。',
+    )
+    assert check_e201(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'pure english, nothing wrong.',
+    )
+    assert check_e201(te)
