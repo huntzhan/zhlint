@@ -454,27 +454,34 @@ def check_e301(text_element):
     return check_on_callback(callback, text_element)
 
 
-def check_block_level_error(text_element):
+def check_with_error_codes(error_codes, text_element):
 
-    BLOCK_LEVEL_CHECKING = [
-        'E101',
-        'E102',
-        'E103',
-        'E104',
-
-        'E203',
-        'E205',
-        'E206',
-        'E207',
-
-        'E301',
-    ]
     ret = True
-    for error_code in BLOCK_LEVEL_CHECKING:
+    for error_code in error_codes:
         checker = globals()['check_{0}'.format(error_code.lower())]
         _ret = checker(text_element)
         ret = ret and _ret
     return ret
+
+
+def check_block_level_error(text_element):
+
+    return check_with_error_codes(
+        [
+            'E101',
+            'E102',
+            'E103',
+            'E104',
+
+            'E203',
+            'E205',
+            'E206',
+            'E207',
+
+            'E301',
+        ],
+        text_element,
+    )
 
 
 def split_text_element(text_element):
@@ -554,7 +561,25 @@ def split_text_element(text_element):
     return sentences
 
 
+def check_sentence_level_error(text_element):
+
+    return check_with_error_codes(
+        [
+            'E201',
+            'E202',
+            'E204',
+        ],
+        text_element,
+    )
+
+
 def detect_errors(text_element):
-    _r1 = check_block_level_error(text_element)
-    _r2 = True
-    return _r1 and _r2
+    ret = []
+    ret.append(
+        check_block_level_error(text_element),
+    )
+    for sentence in split_text_element(text_element):
+        ret.append(
+            check_sentence_level_error(sentence),
+        )
+    return all(ret)
