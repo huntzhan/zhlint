@@ -13,6 +13,8 @@ from zh_doclint.detect_errors import (
     check_e104,
     check_e203,
     check_e205,
+    check_e206,
+    check_e207,
 )
 
 
@@ -332,3 +334,51 @@ def test_e205():
         '中文......',
     )
     assert check_e205(te)
+
+
+def test_e206():
+
+    te = TextElement(
+        '', '1', '2',
+        '中文!!',
+    )
+    assert not check_e206(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文！！',
+    )
+    assert not check_e206(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文!',
+    )
+    assert check_e206(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文！',
+    )
+    assert check_e206(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'english, with space',
+    )
+    assert check_e203(te)
+
+
+def test_e207():
+
+    te = TextElement(
+        '', '1', '2',
+        '中文~',
+    )
+    assert not check_e207(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '中文',
+    )
+    assert check_e207(te)

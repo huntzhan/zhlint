@@ -189,19 +189,41 @@ def check_e203(text_element):
 
 @error_code
 def check_e205(text_element):
-    content = text_element.content
 
     p1 = r'\.{2,}'
-    m = re.search(p1, content)
-    if m and len(m.group(0)) != 6:
-        return m.group(0)
-
     p2 = r'。{2,}'
-    m = re.search(p2, content)
-    if m:
-        return m.group(0)
 
-    return False
+    detected = check_on_patterns(
+        [p1, p2],
+        text_element.content,
+    )
+    if detected and detected[0] == '.' and len(detected) == 6:
+        return False
+    else:
+        return detected
+
+
+@error_code
+def check_e206(text_element):
+
+    p1 = r'!{2,}'
+    p2 = r'！{2,}'
+
+    return check_on_patterns(
+        [p1, p2],
+        text_element.content,
+    )
+
+
+@error_code
+def check_e207(text_element):
+
+    p1 = r'~+'
+
+    return check_on_patterns(
+        [p1],
+        text_element.content,
+    )
 
 
 def check_error(text_element):
