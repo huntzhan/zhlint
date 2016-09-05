@@ -48,10 +48,8 @@ ZH_SYMBOLS = (
 
 def error_code(func):
     ERROR_TEMPLATE = (
-        'Line {1}-{2},\n'
-        '{0}: {3},\n'
-        'Detected: {4}\n'
-        'Repr: {5}\n'
+        '{0}: {1}\n'
+        '{2}\n'
     )
 
     code = func.__name__[-4:].upper()
@@ -61,11 +59,8 @@ def error_code(func):
         detected = func(text_element)
         if detected:
             log = ERROR_TEMPLATE.format(
-                code,
-                text_element.loc_begin, text_element.loc_end,
-                ERRORS[code],
+                code, ERRORS[code],
                 detected,
-                repr(detected),
             )
             print(log)
             return False
@@ -74,12 +69,54 @@ def error_code(func):
     return wrapper
 
 
-def check_on_patterns(patterns, content):
-    for pattern in patterns:
-        m = re.search(pattern, content, re.UNICODE)
-        if m:
-            return m.group()
-    return False
+def check_on_callback(callback, text_element):
+
+    def get_loc(i, j):
+        begin = int(text_element.loc_begin)
+        begin += len(list(filter(
+            lambda c: c == '\n', text_element.content[:i],
+        )))
+        end = begin + len(list(filter(
+            lambda c: c == '\n', text_element.content[i:j],
+        )))
+        return begin, end
+
+    loc_detected = []
+    for i, j, detected in callback(text_element):
+        loc_detected.append(
+            (get_loc(i, j), detected),
+        )
+
+    if not loc_detected:
+        return False
+    else:
+        lines = []
+        for loc, detected in loc_detected:
+            if loc[0] == loc[1]:
+                loc_text = str(loc[0])
+            else:
+                loc_text = '{0}-{1}'.format(*map(str, loc))
+
+            lines.append(
+                'LINE {0}\nDETECTED:{1}\nREPR:{2}'.format(
+                    loc_text, detected, repr(detected),
+                ),
+            )
+            lines.append(
+                '------------------------------------------',
+            )
+        return '\n'.join(lines)
+
+
+def check_on_patterns(patterns, text_element):
+
+    def patterns_callback(text_element):
+
+        for pattern in patterns:
+            for m in re.finditer(pattern, text_element.content, re.UNICODE):
+                yield m.start(), m.end(), m.group(0)
+
+    return check_on_callback(patterns_callback, text_element)
 
 
 def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
@@ -141,7 +178,7 @@ def check_e101(text_element):
 
     return check_on_patterns(
         single_space_patterns(ZH_CHARACTERS, '[a-zA-z]'),
-        text_element.content,
+        text_element,
     )
 
 
@@ -150,7 +187,7 @@ def check_e102(text_element):
 
     return check_on_patterns(
         single_space_patterns(ZH_CHARACTERS, '\d'),
-        text_element.content,
+        text_element,
     )
 
 
@@ -166,7 +203,7 @@ def check_e103(text_element):
             ),
             b_join_a=False,
         ),
-        text_element.content,
+        text_element,
     )
 
 
@@ -174,28 +211,30 @@ def check_e103(text_element):
 def check_e104(text_element):
 
     pattern = r'([(\uff08])\d+([)\uff09])'
-    content = text_element.content
-    m = re.search(pattern, content, flags=re.UNICODE)
-    if not m:
-        return False
 
-    if m.group(1) != '(' or m.group(2) != ')':
-        return m.group(0)
+    def callback(text_element):
+        content = text_element.content
 
-    i = m.start()
-    if i == 0:
-        return False
-    i -= 1
+        for m in re.finditer(pattern, content, flags=re.UNICODE):
+            if m.group(1) != '(' or m.group(2) != ')':
+                yield m.start(), m.end(), m.group(0)
 
-    c = 0
-    while i >= 0 and content[i] in (' ', '\n'):
-        i -= 1
-        c += 1
+            i = m.start()
+            if i == 0:
+                continue
+            i -= 1
 
-    if c != 1:
-        return content[max(0, i):m.end()]
-    else:
-        return False
+            c = 0
+            while i >= 0 and content[i] in (' ', '\n'):
+                i -= 1
+                c += 1
+
+            if c != 1:
+                yield i + 1, m.end(), content[i + 1:m.end()]
+            else:
+                continue
+
+    return check_on_callback(callback, text_element)
 
 
 @error_code
@@ -206,24 +245,23 @@ def check_e203(text_element):
             ZH_SYMBOLS,
             '(?!{0}|\s).'.format(ZH_SYMBOLS),
         ),
-        text_element.content,
+        text_element,
     )
 
 
 @error_code
 def check_e205(text_element):
 
-    p1 = r'\.{2,}'
-    p2 = r'。{2,}'
+    def callback(text_element):
+        p = r'\.{2,}|。{2,}'
+        for m in re.finditer(p, text_element.content, flags=re.UNICODE):
+            detected = m.group(0)
+            if detected[0] == '.' and len(detected) == 6:
+                continue
+            else:
+                yield m.start(), m.end(), detected
 
-    detected = check_on_patterns(
-        [p1, p2],
-        text_element.content,
-    )
-    if detected and detected[0] == '.' and len(detected) == 6:
-        return False
-    else:
-        return detected
+    return check_on_callback(callback, text_element)
 
 
 @error_code
@@ -234,7 +272,7 @@ def check_e206(text_element):
 
     return check_on_patterns(
         [p1, p2],
-        text_element.content,
+        text_element,
     )
 
 
@@ -245,7 +283,7 @@ def check_e207(text_element):
 
     return check_on_patterns(
         [p1],
-        text_element.content,
+        text_element,
     )
 
 
@@ -263,14 +301,17 @@ def check_e301(text_element):
         (r'P\.*S\.*', 'P.S.'),
     ]
 
-    for pattern, correct_form in PATTERN_WORD:
-        m = re.search(
-            pattern, text_element.content,
-            flags=re.UNICODE | re.IGNORECASE,
-        )
-        if m and m.group(0) != correct_form:
-            return '{0}, should be {1}'.format(m.group(0), correct_form)
-    return False
+    def callback(text_element):
+
+        for pattern, correct_form in PATTERN_WORD:
+            for m in re.finditer(
+                pattern, text_element.content,
+                flags=re.UNICODE | re.IGNORECASE,
+            ):
+                if m.group(0) != correct_form:
+                    yield m.start(), m.end(), m.group(0)
+
+    return check_on_callback(callback, text_element)
 
 
 def check_block_level_error(text_element):
