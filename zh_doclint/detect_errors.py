@@ -10,6 +10,8 @@ from operator import methodcaller
 
 import click
 
+from zh_doclint.preprocessor import TextElement
+
 
 ERRORS = {
     # space.
@@ -385,9 +387,9 @@ def check_e301(text_element):
 
         for pattern, correct_form in PATTERN_WORD:
 
-            p1 = '(?![a-zA-Z]){0}(?![a-zA-Z])'.format(pattern)
+            p1 = '(?<![a-zA-Z]){0}(?![a-zA-Z])'.format(pattern)
             p2 = '^{0}(?![a-zA-Z])'.format(pattern)
-            p3 = '(?![a-zA-Z]){0}$'.format(pattern)
+            p3 = '(?<![a-zA-Z]){0}$'.format(pattern)
 
             for p in [p1, p2, p3]:
                 for m in re.finditer(
@@ -421,6 +423,83 @@ def check_block_level_error(text_element):
         _ret = checker(text_element)
         ret = ret and _ret
     return ret
+
+
+def split_text_element(text_element):
+
+    # block_type should be split by newline first.
+    SPLIT_BY_NEWLINES = [
+        'list_block',
+        'table',
+    ]
+
+    elements = []
+    if text_element.block_type not in SPLIT_BY_NEWLINES:
+        elements.append(text_element)
+    else:
+        content = text_element.content
+        loc_begin = int(text_element.loc_begin)
+
+        if not content.strip('\n'):
+            return []
+        else:
+            content = content.strip('\n')
+            for line in content.split('\n'):
+                elements.append(
+                    TextElement(
+                        'paragraph',
+                        str(loc_begin), str(loc_begin),
+                        line,
+                    )
+                )
+                loc_begin += 1
+
+    # split sentences.
+    SENTENCE_SEPS = (
+        '\.{6}'
+        '|'
+        '!|;|\.|\?'
+        '|'
+        '\uff01|\uff1b|\u3002|\uff1f'
+    )
+    sentences = []
+    for element in elements:
+        content = element.content.strip('\n')
+
+        loc_begin = int(element.loc_begin)
+        sbegin = 0
+
+        for m in re.finditer(SENTENCE_SEPS, content, flags=re.UNICODE):
+            send = m.end()
+            tailing_newlines = 0
+            while send < len(content) and content[send] == '\n':
+                send += 1
+                tailing_newlines += 1
+
+            sentence = content[sbegin:send]
+            newlines = len(list(filter(lambda c: c == '\n', sentence)))
+
+            sentences.append(
+                TextElement(
+                    'paragraph',
+                    str(loc_begin),
+                    str(loc_begin + newlines - tailing_newlines),
+                    sentence,
+                )
+            )
+
+            loc_begin += newlines
+            sbegin = send
+
+        if sbegin < len(content):
+            sentences.append(
+                TextElement(
+                    'paragraph',
+                    str(loc_begin), str(loc_begin),
+                    content[sbegin:],
+                )
+            )
+    return sentences
 
 
 def detect_errors(text_element):

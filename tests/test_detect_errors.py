@@ -5,6 +5,8 @@ from __future__ import (
 from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
+from operator import attrgetter
+
 from zh_doclint.preprocessor import TextElement
 from zh_doclint.detect_errors import (
     check_e101,
@@ -17,6 +19,7 @@ from zh_doclint.detect_errors import (
     check_e207,
     check_e301,
     check_block_level_error,
+    split_text_element,
 )
 
 
@@ -436,6 +439,8 @@ def test_e301():
         'PS',
         'ps',
         'Ps.',
+
+        '我app store我',
     ]
 
     for word in WRONG_WORDS:
@@ -459,3 +464,44 @@ def test_block_level_error():
         'app好的句子， 好的句子',
     )
     assert not check_block_level_error(te)
+
+
+def test_split_text_element():
+
+    def help_(key, te):
+        return list(map(attrgetter(key), split_text_element(te)))
+
+    content = '''a
+b.
+c. inline!
+d
+e.'''
+
+    te = TextElement(
+        'paragraph', '1', '5',
+        content,
+    )
+    lines = help_('content', te)
+    begins = help_('loc_begin', te)
+    ends = help_('loc_end', te)
+
+    assert ['a\nb.\n', 'c.', ' inline!\n', 'd\ne.'] == lines
+    assert ['1', '3', '3', '4'] == begins
+    assert ['2', '3', '3', '5'] == ends
+
+    content = '''a......
+b!
+c;
+d.
+e?
+f！
+g；
+h。
+i？'''
+
+    te = TextElement(
+        'paragraph', '1', '9',
+        content,
+    )
+    lines = help_('content', te)
+    assert len(lines) == 9
