@@ -30,12 +30,28 @@ ERRORS = {
     'E301': '常用名词错误',
 }
 
+ZH_CHARACTERS = (
+    '[\u4e00-\u9fff]'
+)
+
+ZH_SYMBOLS = (
+    '['
+    '\u3000-\u303f'
+    '\uff00-\uff0f'
+    '\uff1a-\uff20'
+    '\uff3b-\uff40'
+    '\uff5b-\uff64'
+    '\uffe0-\uffee'
+    ']'
+)
+
 
 def error_code(func):
     ERROR_TEMPLATE = (
         'Line {1}-{2},\n'
         '{0}: {3},\n'
         'Detected: {4}\n'
+        'Repr: {5}\n'
     )
 
     code = func.__name__[-4:].upper()
@@ -49,6 +65,7 @@ def error_code(func):
                 text_element.loc_begin, text_element.loc_end,
                 ERRORS[code],
                 detected,
+                repr(detected),
             )
             print(log)
             return False
@@ -75,9 +92,9 @@ def single_space_patterns(a, b):
 
     # 2. more than one whitespaces.
     # prefix check.
-    p21 = '{0}\s{{2,}}{1}'
+    p21 = '{0}((?!\n)\s){{2,}}{1}'
     # suffix check.
-    p22 = '{1}\s{{2,}}{0}'
+    p22 = '{1}((?!\n)\s){{2,}}{0}'
 
     # 3. wrong single whitespace: [\t\r\f\v]
     # only allow ' ' and '\n'.
@@ -109,7 +126,7 @@ def no_space_patterns(a, b):
 def check_e101(text_element):
 
     return check_on_patterns(
-        single_space_patterns('[\u4e00-\u9fff]', '[a-zA-z]'),
+        single_space_patterns(ZH_CHARACTERS, '[a-zA-z]'),
         text_element.content,
     )
 
@@ -118,7 +135,7 @@ def check_e101(text_element):
 def check_e102(text_element):
 
     return check_on_patterns(
-        single_space_patterns('[\u4e00-\u9fff]', '\d'),
+        single_space_patterns(ZH_CHARACTERS, '\d'),
         text_element.content,
     )
 
@@ -130,7 +147,9 @@ def check_e103(text_element):
         single_space_patterns(
             '\d',
             # non-digit, non-chinese, ％, ℃, x, n.
-            '(?!\d|[\u4e00-\u9fff]|\s)[^\uff05\u2103xn\%]',
+            '(?!\d|{0}|{1}|\s)[^\uff05\u2103xn\%]'.format(
+                ZH_CHARACTERS, ZH_SYMBOLS,
+            ),
         ),
         text_element.content,
     )
@@ -167,21 +186,10 @@ def check_e104(text_element):
 @error_code
 def check_e203(text_element):
 
-    zh_symbols = (
-        '['
-        '\u3000-\u303f'
-        '\uff00-\uff0f'
-        '\uff1a-\uff20'
-        '\uff3b-\uff40'
-        '\uff5b-\uff64'
-        '\uffe0-\uffee'
-        ']'
-    )
-
     return check_on_patterns(
         no_space_patterns(
-            zh_symbols,
-            '(?!{0}|\s).'.format(zh_symbols),
+            ZH_SYMBOLS,
+            '(?!{0}|\s).'.format(ZH_SYMBOLS),
         ),
         text_element.content,
     )

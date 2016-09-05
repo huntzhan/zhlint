@@ -129,6 +129,12 @@ def test_e102():
 
     te = TextElement(
         '', '1', '2',
+        '中文 \n42',
+    )
+    assert check_e102(te)
+
+    te = TextElement(
+        '', '1', '2',
         '42\n中文',
     )
     assert check_e102(te)
@@ -217,6 +223,18 @@ def test_e103():
     te = TextElement(
         '', '1', '2',
         '42℃',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '，42',
+    )
+    assert check_e103(te)
+
+    te = TextElement(
+        '', '1', '2',
+        '42。',
     )
     assert check_e103(te)
 
