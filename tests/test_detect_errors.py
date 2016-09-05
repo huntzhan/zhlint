@@ -15,6 +15,7 @@ from zh_doclint.detect_errors import (
     check_e205,
     check_e206,
     check_e207,
+    check_e301,
 )
 
 
@@ -382,3 +383,33 @@ def test_e207():
         '中文',
     )
     assert check_e207(te)
+
+
+def test_e301():
+
+    WRONG_WORDS = [
+        'APP',
+        'app',
+        'android',
+        'ios',
+        'IOS',
+        'IPHONE',
+        'iphone',
+        'AppStore',
+        'app store',
+        'wifi',
+        'Wifi',
+        'Wi-fi',
+        'E-mail',
+        'Email',
+        'PS',
+        'ps',
+        'Ps.',
+    ]
+
+    for word in WRONG_WORDS:
+        te = TextElement(
+            '', '1', '2',
+            word,
+        )
+        assert not check_e301(te)

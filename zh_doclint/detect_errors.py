@@ -141,7 +141,7 @@ def check_e104(text_element):
 
     pattern = r'([(\uff08])\d+([)\uff09])'
     content = text_element.content
-    m = re.search(pattern, content)
+    m = re.search(pattern, content, flags=re.UNICODE)
     if not m:
         return False
 
@@ -224,6 +224,30 @@ def check_e207(text_element):
         [p1],
         text_element.content,
     )
+
+
+@error_code
+def check_e301(text_element):
+
+    PATTERN_WORD = [
+        (r'app', 'App'),
+        (r'android', 'Android'),
+        (r'ios', 'iOS'),
+        (r'iphone', 'iPhone'),
+        (r'app\sstore', 'App Store'),
+        (r'wi-*fi', 'WiFi'),
+        (r'e-*mail', 'email'),
+        (r'P\.*S\.*', 'P.S.'),
+    ]
+
+    for pattern, correct_form in PATTERN_WORD:
+        m = re.search(
+            pattern, text_element.content,
+            flags=re.UNICODE | re.IGNORECASE,
+        )
+        if m and m.group(0) != correct_form:
+            return '{0}, should be {1}'.format(m.group(0), correct_form)
+    return False
 
 
 def check_error(text_element):
