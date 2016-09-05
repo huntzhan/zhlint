@@ -16,6 +16,7 @@ from zh_doclint.detect_errors import (
     check_e206,
     check_e207,
     check_e301,
+    check_block_level_error,
 )
 
 
@@ -413,3 +414,18 @@ def test_e301():
             word,
         )
         assert not check_e301(te)
+
+
+def test_block_level_error():
+
+    te = TextElement(
+        '', '1', '2',
+        '好的句子，好的句子',
+    )
+    assert check_block_level_error(te)
+
+    te = TextElement(
+        '', '1', '2',
+        'app好的句子， 好的句子',
+    )
+    assert not check_block_level_error(te)

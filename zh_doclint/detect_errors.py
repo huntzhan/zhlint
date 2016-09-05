@@ -250,7 +250,7 @@ def check_e301(text_element):
     return False
 
 
-def check_error(text_element):
+def check_block_level_error(text_element):
 
     BLOCK_LEVEL_CHECKING = [
         'E101',
@@ -265,6 +265,9 @@ def check_error(text_element):
 
         'E301',
     ]
+    ret = True
     for error_code in BLOCK_LEVEL_CHECKING:
-        checker = globals['check_{0}'.format(error_code.lower())]
-        checker(text_element)
+        checker = globals()['check_{0}'.format(error_code.lower())]
+        _ret = checker(text_element)
+        ret = ret and _ret
+    return ret
