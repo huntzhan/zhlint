@@ -295,21 +295,27 @@ def check_e301(text_element):
         (r'android', 'Android'),
         (r'ios', 'iOS'),
         (r'iphone', 'iPhone'),
-        (r'app\sstore', 'App Store'),
+        (r'app\s?store', 'App Store'),
         (r'wi-*fi', 'WiFi'),
         (r'e-*mail', 'email'),
-        (r'(?![a-zA-Z])P\.*S\.*(?![a-zA-Z])', 'P.S.'),
+        (r'P\.*S\.*', 'P.S.'),
     ]
 
     def callback(text_element):
 
         for pattern, correct_form in PATTERN_WORD:
-            for m in re.finditer(
-                pattern, text_element.content,
-                flags=re.UNICODE | re.IGNORECASE,
-            ):
-                if m.group(0) != correct_form:
-                    yield m.start(), m.end(), m.group(0)
+
+            p1 = '(?![a-zA-Z]){0}(?![a-zA-Z])'.format(pattern)
+            p2 = '^{0}(?![a-zA-Z])'.format(pattern)
+            p3 = '(?![a-zA-Z]){0}$'.format(pattern)
+
+            for p in [p1, p2, p3]:
+                for m in re.finditer(
+                    p, text_element.content,
+                    flags=re.UNICODE | re.IGNORECASE,
+                ):
+                    if m.group(0) != correct_form:
+                        yield m.start(), m.end(), m.group(0)
 
     return check_on_callback(callback, text_element)
 
