@@ -161,7 +161,7 @@ def check_e103(text_element):
         single_space_patterns(
             '\d',
             # non-digit, non-chinese, ％, ℃, x, n.
-            '(?!\d|{0}|{1}|\s)[^\uff05\u2103xn\%]'.format(
+            '(?!\d|{0}|{1}|[!-/:-@\[-`{{-~]|\s)[^\uff05\u2103xn\%]'.format(
                 ZH_CHARACTERS, ZH_SYMBOLS,
             ),
             b_join_a=False,

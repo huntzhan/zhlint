@@ -244,6 +244,12 @@ def test_e103():
     )
     assert check_e103(te)
 
+    te = TextElement(
+        '', '1', '2',
+        '136-4321-1234',
+    )
+    assert check_e103(te)
+
 
 def test_e104():
 
