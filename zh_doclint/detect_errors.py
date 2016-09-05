@@ -81,25 +81,79 @@ def check_on_callback(callback, text_element):
         )))
         return begin, end
 
+    def generate_detected_text(i, j):
+        OFFSET = 5
+        content = text_element.content
+
+        ri = i
+        c = 0
+        while ri >= 0 and c < OFFSET and content[ri] != '\n':
+            ri -= 1
+            c += 1
+        ri = min(ri + 1, i)
+
+        rj = j
+        c = 0
+        while rj < len(content) and c < OFFSET and content[ri] != '\n':
+            rj += 1
+            c += 1
+        rj = max(rj - 1, j)
+
+        display_line = content[ri:rj]
+        i = i - ri
+        j = j - ri
+
+        for c in ['\t', '\n']:
+            for m in re.finditer(c, display_line):
+                ci = m.start()
+                if ci < i:
+                    i += 5
+                    j += 5
+                elif ci < j:
+                    j += 5
+
+            display_line = display_line.replace(
+                c,
+                ' [{0}] '.format(repr(c)[2:-1]),
+            )
+
+        mark_line = []
+        for c in display_line[:i]:
+            if 0 <= ord(c) <= 127:
+                mark_line.append(' ')
+            else:
+                mark_line.append('\u3000')
+        for c in display_line[i:j]:
+            if 0 <= ord(c) <= 127:
+                mark_line.append('-')
+            else:
+                mark_line.append('\uff0d')
+        mark_line = ''.join(mark_line)
+
+        return '{0}\n{1}'.format(display_line, mark_line)
+
     loc_detected = []
-    for i, j, detected in callback(text_element):
+    for i, j in callback(text_element):
         loc_detected.append(
-            (get_loc(i, j), detected),
+            (i, j),
         )
 
     if not loc_detected:
         return False
     else:
         lines = []
-        for loc, detected in sorted(loc_detected):
+        for i, j in sorted(loc_detected):
+            loc = get_loc(i, j)
+            detected = generate_detected_text(i, j)
+
             if loc[0] == loc[1]:
                 loc_text = str(loc[0])
             else:
                 loc_text = '{0}-{1}'.format(*map(str, loc))
 
             lines.append(
-                'LINE:     {0}\nDETECTED: {1}\nREPR:     {2}'.format(
-                    loc_text, detected, repr(detected),
+                'LINE: {0}\n{1}'.format(
+                    loc_text, detected,
                 ),
             )
             lines.append(
@@ -114,7 +168,7 @@ def check_on_patterns(patterns, text_element):
 
         for pattern in patterns:
             for m in re.finditer(pattern, text_element.content, re.UNICODE):
-                yield m.start(), m.end(), m.group(0)
+                yield m.start(), m.end()
 
     return check_on_callback(patterns_callback, text_element)
 
@@ -217,7 +271,7 @@ def check_e104(text_element):
 
         for m in re.finditer(pattern, content, flags=re.UNICODE):
             if m.group(1) != '(' or m.group(2) != ')':
-                yield m.start(), m.end(), m.group(0)
+                yield m.start(), m.end()
 
             i = m.start()
             if i == 0:
@@ -230,7 +284,7 @@ def check_e104(text_element):
                 c += 1
 
             if c != 1:
-                yield i + 1, m.end(), content[i + 1:m.end()]
+                yield i + 1, m.end()
             else:
                 continue
 
@@ -259,7 +313,7 @@ def check_e205(text_element):
             if detected[0] == '.' and len(detected) == 6:
                 continue
             else:
-                yield m.start(), m.end(), detected
+                yield m.start(), m.end()
 
     return check_on_callback(callback, text_element)
 
@@ -315,7 +369,7 @@ def check_e301(text_element):
                     flags=re.UNICODE | re.IGNORECASE,
                 ):
                     if m.group(0) != correct_form:
-                        yield m.start(), m.end(), m.group(0)
+                        yield m.start(), m.end()
 
     return check_on_callback(callback, text_element)
 
