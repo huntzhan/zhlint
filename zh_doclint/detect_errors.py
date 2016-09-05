@@ -91,14 +91,14 @@ def check_on_callback(callback, text_element):
         return False
     else:
         lines = []
-        for loc, detected in loc_detected:
+        for loc, detected in sorted(loc_detected):
             if loc[0] == loc[1]:
                 loc_text = str(loc[0])
             else:
                 loc_text = '{0}-{1}'.format(*map(str, loc))
 
             lines.append(
-                'LINE {0}\nDETECTED:{1}\nREPR:{2}'.format(
+                'LINE:     {0}\nDETECTED: {1}\nREPR:     {2}'.format(
                     loc_text, detected, repr(detected),
                 ),
             )
@@ -298,7 +298,7 @@ def check_e301(text_element):
         (r'app\sstore', 'App Store'),
         (r'wi-*fi', 'WiFi'),
         (r'e-*mail', 'email'),
-        (r'P\.*S\.*', 'P.S.'),
+        (r'(?![a-zA-Z])P\.*S\.*(?![a-zA-Z])', 'P.S.'),
     ]
 
     def callback(text_element):
