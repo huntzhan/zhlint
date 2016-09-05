@@ -187,6 +187,23 @@ def check_e203(text_element):
     )
 
 
+@error_code
+def check_e205(text_element):
+    content = text_element.content
+
+    p1 = r'\.{2,}'
+    m = re.search(p1, content)
+    if m and len(m.group(0)) != 6:
+        return m.group(0)
+
+    p2 = r'。{2,}'
+    m = re.search(p2, content)
+    if m:
+        return m.group(0)
+
+    return False
+
+
 def check_error(text_element):
 
     BLOCK_LEVEL_CHECKING = [
