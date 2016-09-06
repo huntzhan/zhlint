@@ -1,6 +1,6 @@
 # zh-doclint
 
-Note: This project is highly related to Chinese, so the document is writtern in Chineses.
+Note: This project is highly related to Chinese, so the document is writtern in Chinese.
 
 ## 简介
 
