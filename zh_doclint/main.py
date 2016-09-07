@@ -11,7 +11,7 @@ import click
 
 from zh_doclint.metadata import VERSION
 from zh_doclint.preprocessor import transform
-from zh_doclint.detect_errors import detect_errors
+from zh_doclint.error_detection import detect_errors
 
 
 def load_file(fpath):
