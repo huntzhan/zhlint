@@ -20,7 +20,7 @@ def remove_block(pattern, text):
 
     for m in re.finditer(pattern, text, flags=re.DOTALL | re.UNICODE):
         segments.append(text[begin:m.start()])
-        segments.append(b'\n' * count_newlines(m))
+        segments.append('\n' * count_newlines(m))
         begin = m.end()
 
     if begin < len(text):
