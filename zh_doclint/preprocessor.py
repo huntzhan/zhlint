@@ -18,7 +18,7 @@ def remove_block(pattern, text):
     segments = []
     begin = 0
 
-    for m in re.finditer(pattern, text, flags=re.DOTALL):
+    for m in re.finditer(pattern, text, flags=re.DOTALL | re.UNICODE):
         segments.append(text[begin:m.start()])
         segments.append(b'\n' * count_newlines(m))
         begin = m.end()
@@ -26,7 +26,7 @@ def remove_block(pattern, text):
     if begin < len(text):
         segments.append(text[begin:])
 
-    return b''.join(segments)
+    return ''.join(segments)
 
 
 TextElement = namedtuple(
