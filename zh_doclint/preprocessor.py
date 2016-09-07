@@ -73,7 +73,7 @@ def transform(text):
 
     text = remove_block(r'^\s*\-{3}.*?\-{3}', text)
 
-    text += b'\nEOF\n'
+    text += '\nEOF\n'
 
     hacked_md = Markdown(renderer=HackedRenderer(), block=HackedBlockLexer())
     text = hacked_md(text)
