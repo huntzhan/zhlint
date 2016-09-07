@@ -26,8 +26,8 @@ def eof(text_element):
 
 def test_latex_inline():
     elements = transform(load_test_md('latex_inline.md'))
-    assert 'a line with FORMULAR words.\n' == elements[0].content
-    assert 'a line with FORMULAR words.\n' == elements[1].content
+    assert 'a line with $$ words.\n' == elements[0].content
+    assert 'a line with \\(\\) words.\n' == elements[1].content
     eof(elements[2])
 
 

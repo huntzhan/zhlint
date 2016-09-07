@@ -64,15 +64,17 @@ def generate_text_elements(text):
 def transform(text):
 
     # latex-inline.
-    text = re.sub(r'\$.+?\$', 'FORMULAR', text)
-    text = re.sub(r'\\\(.+?\\\)', 'FORMULAR', text)
+    text = re.sub(r'\$.+?\$', '$$', text)
+    text = re.sub(r'\\\(.+?\\\)', '\\\\\(\\\\\)', text)
 
     # latex-block.
     text = remove_block(r'\$\$.+?\$\$', text)
     text = remove_block(r'\\\[.+?\\\]', text)
 
+    # yaml header.
     text = remove_block(r'^\s*\-{3}.*?\-{3}', text)
 
+    # manually add EOF.
     text += '\nEOF\n'
 
     hacked_md = Markdown(renderer=HackedRenderer(), block=HackedBlockLexer())
