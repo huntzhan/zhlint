@@ -35,10 +35,6 @@ TextElement = namedtuple(
 )
 
 
-def split_text_element(text_element):
-    pass
-
-
 def generate_text_elements(text):
     MARK_PATTERN = (
         '<<DOCLINT: TYPE=(.+?), LOC_BEGIN=(\d+), LOC_END=(\d+)>>\n'
@@ -65,11 +61,16 @@ def generate_text_elements(text):
     return text_elements
 
 
-def transform(file_content):
+def transform(text):
 
-    text = re.sub(r'\$.+?\$', 'FORMULAR', file_content)
+    # latex-inline.
+    text = re.sub(r'\$.+?\$', 'FORMULAR', text)
+    text = re.sub(r'\\\(.+?\\\)', 'FORMULAR', text)
 
+    # latex-block.
     text = remove_block(r'\$\$.+?\$\$', text)
+    text = remove_block(r'\\\[.+?\\\]', text)
+
     text = remove_block(r'^\s*\-{3}.*?\-{3}', text)
 
     text += b'\nEOF\n'

@@ -106,7 +106,7 @@ def check_on_callback(callback, text_element):
         return begin, end
 
     def generate_detected_text(i, j):
-        OFFSET = 5
+        OFFSET = 10
         content = text_element.content
 
         ri = i
