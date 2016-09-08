@@ -239,6 +239,12 @@ def detect_e201(text_element):
 
         return pattern_template.format(r'|'.join(patterns))
 
+    def split_by_e104(te):
+        return [
+            TextElement(te.block_type, te.loc_begin, te.loc_end, content)
+            for content in re.split(r'\(\d+\)', te.content, flags=re.UNICODE)
+        ]
+
     LATEX_MARKS = ['$$', '\(', '\)']
 
     ret = []
@@ -269,21 +275,22 @@ def detect_e201(text_element):
 
     patterns = ['({0})'.format(p) for p in [p1, p2, p3, p4, p5]]
 
-    for m in detect_by_patterns(
-        patterns,
-        text_element,
-        ignore_matches=set(['......']),
-    ):
-        if SpecialWordHelper.delimiter_in_word(text_element.content, m):
-            continue
+    for element in split_by_e104(text_element):
+        for m in detect_by_patterns(
+            patterns,
+            element,
+            ignore_matches=set(['......']),
+        ):
+            if SpecialWordHelper.delimiter_in_word(element.content, m):
+                continue
 
-        contains_mark = False
-        for mark in LATEX_MARKS:
-            if mark in m.group(0):
-                contains_mark = True
-                break
-        if not contains_mark:
-            ret.append(m)
+            contains_mark = False
+            for mark in LATEX_MARKS:
+                if mark in m.group(0):
+                    contains_mark = True
+                    break
+            if not contains_mark:
+                ret.append(m)
 
     return ret
 

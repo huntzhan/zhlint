@@ -198,6 +198,7 @@ def test_e205():
             '中文......',
             '中文 test@email.com',
             '中文 +135-1234-5678'
+            '中文 (1) '
         ],
         detect_e205,
         should_detected=False,
