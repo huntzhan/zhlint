@@ -492,7 +492,24 @@ def split_text_element(text_element):
         r'|'
         r'\uff01|\uff1b|\u3002|\uff1f'
     )
+
+    OPEN_PARENTHESIS = set(
+        '('
+        '（'
+        '['
+        '「'
+        '『'
+    )
+    CLOSE_PARENTHESIS = set(
+        ')'
+        '）'
+        ']'
+        '」'
+        '』'
+    )
+
     sentences = []
+
     for element in elements:
         content = element.content.strip('\n')
 
@@ -511,6 +528,16 @@ def split_text_element(text_element):
                 tailing_newlines += 1
 
             sentence = content[sbegin:send]
+
+            level = 0
+            for c in sentence:
+                if c in OPEN_PARENTHESIS:
+                    level += 1
+                elif c in CLOSE_PARENTHESIS:
+                    level -= 1
+            if level != 0:
+                continue
+
             newlines = len(list(filter(lambda c: c == '\n', sentence)))
 
             sentences.append(

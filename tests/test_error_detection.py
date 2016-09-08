@@ -354,8 +354,20 @@ def test_e204():
 
 def test_split_text_element():
 
-    def help_(key, te):
+    def access(key, te):
         return list(map(attrgetter(key), split_text_element(te)))
+
+    def help_(content, begin, end):
+        te = TextElement(
+            'paragraph', begin, end,
+            content,
+        )
+
+        lines = access('content', te)
+        begins = access('loc_begin', te)
+        ends = access('loc_end', te)
+
+        return lines, begins, ends
 
     content = '''a
 b.
@@ -363,13 +375,7 @@ c. inline!
 d
 e.'''
 
-    te = TextElement(
-        'paragraph', '1', '5',
-        content,
-    )
-    lines = help_('content', te)
-    begins = help_('loc_begin', te)
-    ends = help_('loc_end', te)
+    lines, begins, ends = help_(content, '1', '5')
 
     assert ['a\nb.\n', 'c.', ' inline!\n', 'd\ne.'] == lines
     assert ['1', '3', '3', '4'] == begins
@@ -385,18 +391,19 @@ g；
 h。
 i？'''
 
-    te = TextElement(
-        'paragraph', '1', '9',
-        content,
-    )
-    lines = help_('content', te)
+    lines, begins, ends = help_(content, '1', '9')
     assert len(lines) == 9
 
     content = '''P.S. this is a line!'''
 
-    te = TextElement(
-        'paragraph', '1', '9',
-        content,
-    )
-    lines = help_('content', te)
+    lines, begins, ends = help_(content, '1', '9')
     assert len(lines) == 1
+
+    content = '''sentence 1.
+   （中文！中文！）
+sentence 2.'''
+    lines, begins, ends = help_(content, '1', '3')
+
+    assert ['sentence 1.\n', '   （中文！中文！）\nsentence 2.'] == lines
+    assert ['1', '2'] == begins
+    assert ['1', '3'] == ends
