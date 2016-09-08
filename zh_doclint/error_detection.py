@@ -159,19 +159,33 @@ def detect_e103(text_element):
 # 4: right parenthesis.
 def detect_e104(text_element):
 
-    pattern = (
+    p1 = (
+        r'(?<=[^\s\n]{1})'
         r'(\s*)'
         r'([(\uff08])'
         r'(\d+)'
         r'([)\uff09])'
     )
 
-    content = text_element.content
+    # cover
+    p2 = (
+        r'(?:^|\n)'
+        r'(\s*)'
+        r'([(\uff08])'
+        r'(\d+)'
+        r'([)\uff09])'
+    )
 
-    for m in re.finditer(pattern, content, flags=re.UNICODE):
+    for m in detect_by_patterns([p1], text_element):
         if m.group(2) != '(' or m.group(4) != ')':
             yield m
         if m.group(1) not in (' ', '\n'):
+            yield m
+
+    for m in detect_by_patterns([p2], text_element):
+        if m.group(2) != '(' or m.group(4) != ')':
+            yield m
+        if m.group(1) != '':
             yield m
 
 

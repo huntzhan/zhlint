@@ -142,6 +142,7 @@ def test_e104():
             '（42）',
             '42(42)',
             '42  (42)',
+            ' (42)',
         ],
         detect_e104,
         should_detected=True,
@@ -151,6 +152,7 @@ def test_e104():
         [
             '42 (42)',
             '42\n(42)',
+            '(42)',
         ],
         detect_e104,
         should_detected=False,
