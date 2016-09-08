@@ -6,6 +6,7 @@ from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
 import re
+import itertools
 
 import click
 
@@ -167,8 +168,8 @@ class ErrorDisplayHandler(object):
         else:
             self.detected_error = True
 
-        for style in (
-            self.header_styles(error_code) +
+        for style in itertools.chain(
+            self.header_styles(error_code),
             self.body_styles(text_element, matches)
         ):
             click.echo(style, nl=False)

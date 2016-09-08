@@ -287,6 +287,7 @@ def test_e201():
             '有中文，正确。',
             '有中文，正确......',
             'pure english, nothing wrong.',
+            'P.S. 这是一行中文。',
         ],
         detect_e201,
         should_detected=False,
@@ -373,3 +374,12 @@ i？'''
     )
     lines = help_('content', te)
     assert len(lines) == 9
+
+    content = '''P.S. this is a line!'''
+
+    te = TextElement(
+        'paragraph', '1', '9',
+        content,
+    )
+    lines = help_('content', te)
+    assert len(lines) == 1

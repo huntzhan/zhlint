@@ -7,6 +7,7 @@ from future.builtins.disabled import *  # noqa
 
 import re
 from operator import methodcaller
+from collections import defaultdict
 
 from zh_doclint.preprocessor import TextElement
 
@@ -189,11 +190,17 @@ def detect_e201(text_element):
         return False
 
     p = r'[!-/:-@\[-`\{-~]+'
-    return detect_by_patterns(
+    ret = []
+    for m in detect_by_patterns(
         [p],
         text_element,
         ignore_matches=set(['......']),
-    )
+    ):
+        if SpecialWordHelper.delimiter_in_word(text_element.content, m):
+            continue
+        else:
+            ret.append(m)
+    return ret
 
 
 def detect_e202(text_element):
@@ -227,20 +234,74 @@ def detect_e204(text_element):
     )
 
 
+class SpecialWordHelper(object):
+
+    WORD_PATTERN = {
+        'App': r'app',
+        'Android': r'android',
+        'iOS': r'ios',
+        'iPhone': r'iphone',
+        'App Store': r'app\s?store',
+        'WiFi': r'wi-*fi',
+        'email': r'e-*mail',
+        'P.S.': r'P\.*S\.*',
+    }
+
+    WORD_MAX_LENGTH = None
+    SENTENCE_DELIMITER_TO_WORD = None
+
+    @classmethod
+    def init(cls):
+        if cls.WORD_MAX_LENGTH and cls.SENTENCE_DELIMITER_TO_WORD:
+            return
+
+        delimiters = [
+            '!', ';', '.', '?',
+            '\uff01', '\uff1b', '\u3002', '\uff1f',
+        ]
+
+        cls.SENTENCE_DELIMITER_TO_WORD = defaultdict(list)
+        for delimiter in delimiters:
+            for word in cls.WORD_PATTERN:
+                if delimiter not in word:
+                    continue
+                cls.SENTENCE_DELIMITER_TO_WORD[delimiter].append(word)
+
+        cls.WORD_MAX_LENGTH = 0
+        for word in cls.WORD_PATTERN:
+            cls.WORD_MAX_LENGTH = max(cls.WORD_MAX_LENGTH, len(word))
+
+    @classmethod
+    def select_segment(cls, content, match):
+        segment_begin = max(
+            0,
+            match.end() - SpecialWordHelper.WORD_MAX_LENGTH,
+        )
+        segment_end = min(
+            len(content) - 1,
+            match.start() + SpecialWordHelper.WORD_MAX_LENGTH,
+        )
+        return content[segment_begin:segment_end]
+
+    @classmethod
+    def delimiter_in_word(cls, content, match):
+        delimiter = match.group(0)
+        if delimiter not in cls.SENTENCE_DELIMITER_TO_WORD:
+            return False
+
+        segment = cls.select_segment(content, match)
+        for word in cls.SENTENCE_DELIMITER_TO_WORD.get(delimiter, []):
+            if segment.find(word) >= 0:
+                return True
+        return False
+
+
+SpecialWordHelper.init()
+
+
 def detect_e301(text_element):
 
-    PATTERN_WORD = [
-        (r'app', 'App'),
-        (r'android', 'Android'),
-        (r'ios', 'iOS'),
-        (r'iphone', 'iPhone'),
-        (r'app\s?store', 'App Store'),
-        (r'wi-*fi', 'WiFi'),
-        (r'e-*mail', 'email'),
-        (r'P\.*S\.*', 'P.S.'),
-    ]
-
-    for pattern, correct_form in PATTERN_WORD:
+    for correct_form, pattern in SpecialWordHelper.WORD_PATTERN.items():
 
         p1 = r'(?<![a-zA-Z]){0}(?![a-zA-Z])'.format(pattern)
         p2 = r'^{0}(?![a-zA-Z])'.format(pattern)
@@ -313,7 +374,7 @@ def split_text_element(text_element):
                 loc_begin += 1
 
     # split sentences.
-    SENTENCE_SEPS = (
+    SENTENCE_DELIMITERS = (
         r'\.{6}'
         r'|'
         r'!|;|\.|\?'
@@ -327,7 +388,11 @@ def split_text_element(text_element):
         loc_begin = int(element.loc_begin)
         sbegin = 0
 
-        for m in re.finditer(SENTENCE_SEPS, content, flags=re.UNICODE):
+        for m in re.finditer(SENTENCE_DELIMITERS, content, flags=re.UNICODE):
+            # ignore delimiter within special words.
+            if SpecialWordHelper.delimiter_in_word(content, m):
+                continue
+
             send = m.end()
             tailing_newlines = 0
             while send < len(content) and content[send] == '\n':
