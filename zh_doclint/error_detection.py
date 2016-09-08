@@ -93,7 +93,7 @@ def error_code(func):
     return wrapper
 
 
-def check_on_callback(callback, text_element):
+def detect_by_callback(callback, text_element):
 
     def get_loc(i, j):
         begin = int(text_element.loc_begin)
@@ -190,7 +190,7 @@ def check_on_callback(callback, text_element):
         return styles
 
 
-def check_on_patterns(patterns, text_element, ignore_matches=set()):
+def detect_by_patterns(patterns, text_element, ignore_matches=set()):
 
     def patterns_callback(text_element):
 
@@ -200,7 +200,7 @@ def check_on_patterns(patterns, text_element, ignore_matches=set()):
                     continue
                 yield m
 
-    return check_on_callback(patterns_callback, text_element)
+    return detect_by_callback(patterns_callback, text_element)
 
 
 def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
@@ -258,27 +258,27 @@ def no_space_patterns(a, b):
 
 
 @error_code
-def check_e101(text_element):
+def detect_e101(text_element):
 
-    return check_on_patterns(
+    return detect_by_patterns(
         single_space_patterns(ZH_CHARACTERS, r'[a-zA-z]'),
         text_element,
     )
 
 
 @error_code
-def check_e102(text_element):
+def detect_e102(text_element):
 
-    return check_on_patterns(
+    return detect_by_patterns(
         single_space_patterns(ZH_CHARACTERS, r'\d'),
         text_element,
     )
 
 
 @error_code
-def check_e103(text_element):
+def detect_e103(text_element):
 
-    return check_on_patterns(
+    return detect_by_patterns(
         single_space_patterns(
             r'\d',
             # non-digit, non-chinese, ％, ℃, x, n.
@@ -292,7 +292,7 @@ def check_e103(text_element):
 
 
 @error_code
-def check_e104(text_element):
+def detect_e104(text_element):
 
     pattern = (
         r'(\s*)'
@@ -310,13 +310,13 @@ def check_e104(text_element):
             if m.group(1) not in (' ', '\n'):
                 yield m
 
-    return check_on_callback(callback, text_element)
+    return detect_by_callback(callback, text_element)
 
 
 @error_code
-def check_e203(text_element):
+def detect_e203(text_element):
 
-    return check_on_patterns(
+    return detect_by_patterns(
         no_space_patterns(
             ZH_SYMBOLS,
             r'(?!{0}|\s).'.format(ZH_SYMBOLS),
@@ -326,7 +326,7 @@ def check_e203(text_element):
 
 
 @error_code
-def check_e205(text_element):
+def detect_e205(text_element):
 
     def callback(text_element):
         p = r'\.{2,}|。{2,}'
@@ -335,27 +335,27 @@ def check_e205(text_element):
             if detected[0] != '.' or len(detected) != 6:
                 yield m
 
-    return check_on_callback(callback, text_element)
+    return detect_by_callback(callback, text_element)
 
 
 @error_code
-def check_e206(text_element):
+def detect_e206(text_element):
 
     p1 = r'!{2,}'
     p2 = r'！{2,}'
 
-    return check_on_patterns(
+    return detect_by_patterns(
         [p1, p2],
         text_element,
     )
 
 
 @error_code
-def check_e207(text_element):
+def detect_e207(text_element):
 
     p1 = r'~+'
 
-    return check_on_patterns(
+    return detect_by_patterns(
         [p1],
         text_element,
     )
@@ -366,12 +366,12 @@ def contains_chinese_characters(content):
 
 
 @error_code
-def check_e201(text_element):
+def detect_e201(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
 
     p = r'[!-/:-@\[-`\{-~]+'
-    return check_on_patterns(
+    return detect_by_patterns(
         [p],
         text_element,
         ignore_matches=set(['......']),
@@ -379,18 +379,18 @@ def check_e201(text_element):
 
 
 @error_code
-def check_e202(text_element):
+def detect_e202(text_element):
     if contains_chinese_characters(text_element.content):
         return False
 
-    return check_on_patterns(
+    return detect_by_patterns(
         [ZH_SYMBOLS],
         text_element,
     )
 
 
 @error_code
-def check_e204(text_element):
+def detect_e204(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
 
@@ -405,14 +405,14 @@ def check_e204(text_element):
         # “”
         r'\u201c|\u201d'
     )
-    return check_on_patterns(
+    return detect_by_patterns(
         [p],
         text_element,
     )
 
 
 @error_code
-def check_e301(text_element):
+def detect_e301(text_element):
 
     PATTERN_WORD = [
         (r'app', 'App'),
@@ -441,22 +441,22 @@ def check_e301(text_element):
                     if m.group(0) != correct_form:
                         yield m
 
-    return check_on_callback(callback, text_element)
+    return detect_by_callback(callback, text_element)
 
 
-def check_with_error_codes(error_codes, text_element):
+def detect_with_error_codes(error_codes, text_element):
 
     ret = True
     for error_code in error_codes:
-        checker = globals()['check_{0}'.format(error_code.lower())]
+        checker = globals()['detect_{0}'.format(error_code.lower())]
         _ret = checker(text_element)
         ret = ret and _ret
     return ret
 
 
-def check_block_level_error(text_element):
+def detect_block_level_error(text_element):
 
-    return check_with_error_codes(
+    return detect_with_error_codes(
         [
             'E101',
             'E102',
@@ -551,9 +551,9 @@ def split_text_element(text_element):
     return sentences
 
 
-def check_sentence_level_error(text_element):
+def detect_sentence_level_error(text_element):
 
-    return check_with_error_codes(
+    return detect_with_error_codes(
         [
             'E201',
             'E202',
@@ -566,10 +566,10 @@ def check_sentence_level_error(text_element):
 def detect_errors(text_element):
     ret = []
     ret.append(
-        check_block_level_error(text_element),
+        detect_block_level_error(text_element),
     )
     for sentence in split_text_element(text_element):
         ret.append(
-            check_sentence_level_error(sentence),
+            detect_sentence_level_error(sentence),
         )
     return all(ret)
