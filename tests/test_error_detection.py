@@ -279,6 +279,10 @@ def test_e201():
     check_texts(
         [
             '有中文, 错误.',
+            'LaTeX 公式 $$.',
+            'LaTeX 公式,$$',
+            'LaTeX 公式 \(\).',
+            'LaTeX 公式,\(\)',
         ],
         detect_e201,
         should_detected=True,
@@ -290,6 +294,8 @@ def test_e201():
             '有中文，正确......',
             'pure english, nothing wrong.',
             'P.S. 这是一行中文。',
+            'LaTeX 公式 $$',
+            'LaTeX 公式 \(\)',
         ],
         detect_e201,
         should_detected=False,

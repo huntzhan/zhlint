@@ -8,6 +8,7 @@ from future.builtins.disabled import *  # noqa
 import re
 from operator import methodcaller
 from collections import defaultdict
+import itertools
 
 from zh_doclint.preprocessor import TextElement
 
@@ -189,18 +190,61 @@ def detect_e201(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
 
-    # ignore common shared characters: '@#%&+*-=|~'
-    p = r'[\!\"\$\'\(\)\,\.\:\;\<\>\?\[\\\]\^\_\{\}]+'
+    PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}')
+
+    def marks_pattern(pattern_template, texts):
+
+        patterns = []
+        for text in texts:
+            pattern = r'({0})'.format(re.escape(text))
+            patterns.append(pattern)
+
+        return pattern_template.format(r'|'.join(patterns))
+
+    LATEX_MARKS = ['$$', '\(', '\)']
+
     ret = []
+
+    # gerneral forms, ignore common shared characters: '@#%&+*-=|~'
+    p1 = r'[{0}]+'.format(re.escape(''.join(PUNCTUATIONS)))
+
+    # prefix
+    p2 = ''.join(itertools.chain(
+        marks_pattern(r'(?<={0})', LATEX_MARKS),
+        p1,
+    ))
+    # suffix.
+    p3 = ''.join(itertools.chain(
+        p1,
+        marks_pattern(r'(?={0})', LATEX_MARKS),
+    ))
+    # special cases: \(\).
+    p4 = ''.join(itertools.chain(
+        marks_pattern(r'(?<={0})', ['\(\)']),
+        p1,
+    ))
+    # suffix.
+    p5 = ''.join(itertools.chain(
+        p1,
+        marks_pattern(r'(?={0})', ['\(\)']),
+    ))
+
     for m in detect_by_patterns(
-        [p],
+        [p1, p2, p3, p4, p5],
         text_element,
         ignore_matches=set(['......']),
     ):
         if SpecialWordHelper.delimiter_in_word(text_element.content, m):
             continue
-        else:
+
+        contains_mark = False
+        for mark in LATEX_MARKS:
+            if mark in m.group(0):
+                contains_mark = True
+                break
+        if not contains_mark:
             ret.append(m)
+
     return ret
 
 
