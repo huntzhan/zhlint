@@ -35,18 +35,18 @@ ERRORS = {
 }
 
 ZH_CHARACTERS = (
-    '[\u4e00-\u9fff]'
+    r'[\u4e00-\u9fff]'
 )
 
 ZH_SYMBOLS = (
-    '['
-    '\u3000-\u303f'
-    '\uff00-\uff0f'
-    '\uff1a-\uff20'
-    '\uff3b-\uff40'
-    '\uff5b-\uff64'
-    '\uffe0-\uffee'
-    ']'
+    r'['
+    r'\u3000-\u303f'
+    r'\uff00-\uff0f'
+    r'\uff1a-\uff20'
+    r'\uff3b-\uff40'
+    r'\uff5b-\uff64'
+    r'\uffe0-\uffee'
+    r']'
 )
 
 
@@ -157,9 +157,9 @@ def check_on_callback(callback, text_element):
         return text_line, mark_line
 
     loc_detected = []
-    for i, j in callback(text_element):
+    for m in callback(text_element):
         loc_detected.append(
-            (i, j),
+            (m.start(), m.end()),
         )
 
     if not loc_detected:
@@ -198,7 +198,7 @@ def check_on_patterns(patterns, text_element, ignore_matches=set()):
             for m in re.finditer(pattern, text_element.content, re.UNICODE):
                 if m.group(0) in ignore_matches:
                     continue
-                yield m.start(), m.end()
+                yield m
 
     return check_on_callback(patterns_callback, text_element)
 
@@ -207,22 +207,22 @@ def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
 
     # 1. no space.
     # prefix check.
-    p11 = '{0}{1}'
+    p11 = r'{0}{1}'
     # suffix check.
-    p12 = '{1}{0}'
+    p12 = r'{1}{0}'
 
     # 2. more than one whitespaces.
     # prefix check.
-    p21 = '{0}((?!\n)\s){{2,}}{1}'
+    p21 = r'{0}((?!\n)\s){{2,}}{1}'
     # suffix check.
-    p22 = '{1}((?!\n)\s){{2,}}{0}'
+    p22 = r'{1}((?!\n)\s){{2,}}{0}'
 
     # 3. wrong single whitespace: [\t\r\f\v]
     # only allow ' ' and '\n'.
     # prefix check.
-    p31 = '{0}(?![ \n])\s{{1}}{1}'
+    p31 = r'{0}(?![ \n])\s{{1}}{1}'
     # suffix check.
-    p32 = '{1}(?![ \n])\s{{1}}{0}'
+    p32 = r'{1}(?![ \n])\s{{1}}{0}'
 
     patterns = []
     if a_join_b:
@@ -247,9 +247,9 @@ def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
 def no_space_patterns(a, b):
 
     # prefix check.
-    p1 = '{0}((?!\n)\s)+{1}'
+    p1 = r'{0}((?!\n)\s)+{1}'
     # suffix check.
-    p2 = '{1}((?!\n)\s)+{0}'
+    p2 = r'{1}((?!\n)\s)+{0}'
 
     return list(map(
         methodcaller('format', a, b),
@@ -261,7 +261,7 @@ def no_space_patterns(a, b):
 def check_e101(text_element):
 
     return check_on_patterns(
-        single_space_patterns(ZH_CHARACTERS, '[a-zA-z]'),
+        single_space_patterns(ZH_CHARACTERS, r'[a-zA-z]'),
         text_element,
     )
 
@@ -270,7 +270,7 @@ def check_e101(text_element):
 def check_e102(text_element):
 
     return check_on_patterns(
-        single_space_patterns(ZH_CHARACTERS, '\d'),
+        single_space_patterns(ZH_CHARACTERS, r'\d'),
         text_element,
     )
 
@@ -280,9 +280,9 @@ def check_e103(text_element):
 
     return check_on_patterns(
         single_space_patterns(
-            '\d',
+            r'\d',
             # non-digit, non-chinese, ％, ℃, x, n.
-            '(?!\d|{0}|{1}|[!-/:-@\[-`{{-~]|\s)[^\uff05\u2103xn\%]'.format(
+            r'(?!\d|{0}|{1}|[!-/:-@\[-`{{-~]|\s)[^\uff05\u2103xn\%]'.format(
                 ZH_CHARACTERS, ZH_SYMBOLS,
             ),
             b_join_a=False,
@@ -294,29 +294,21 @@ def check_e103(text_element):
 @error_code
 def check_e104(text_element):
 
-    pattern = r'([(\uff08])\d+([)\uff09])'
+    pattern = (
+        r'(\s*)'
+        r'([(\uff08])'
+        r'\d+'
+        r'([)\uff09])'
+    )
 
     def callback(text_element):
         content = text_element.content
 
         for m in re.finditer(pattern, content, flags=re.UNICODE):
-            if m.group(1) != '(' or m.group(2) != ')':
-                yield m.start(), m.end()
-
-            i = m.start()
-            if i == 0:
-                continue
-            i -= 1
-
-            c = 0
-            while i >= 0 and content[i] in (' ', '\n'):
-                i -= 1
-                c += 1
-
-            if c != 1:
-                yield i + 1, m.end()
-            else:
-                continue
+            if m.group(2) != '(' or m.group(3) != ')':
+                yield m
+            if m.group(1) not in (' ', '\n'):
+                yield m
 
     return check_on_callback(callback, text_element)
 
@@ -327,7 +319,7 @@ def check_e203(text_element):
     return check_on_patterns(
         no_space_patterns(
             ZH_SYMBOLS,
-            '(?!{0}|\s).'.format(ZH_SYMBOLS),
+            r'(?!{0}|\s).'.format(ZH_SYMBOLS),
         ),
         text_element,
     )
@@ -340,10 +332,8 @@ def check_e205(text_element):
         p = r'\.{2,}|。{2,}'
         for m in re.finditer(p, text_element.content, flags=re.UNICODE):
             detected = m.group(0)
-            if detected[0] == '.' and len(detected) == 6:
-                continue
-            else:
-                yield m.start(), m.end()
+            if detected[0] != '.' or len(detected) != 6:
+                yield m
 
     return check_on_callback(callback, text_element)
 
@@ -380,7 +370,7 @@ def check_e201(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
 
-    p = '[!-/:-@\[-`\{-~]+'
+    p = r'[!-/:-@\[-`\{-~]+'
     return check_on_patterns(
         [p],
         text_element,
@@ -405,15 +395,15 @@ def check_e204(text_element):
         return False
 
     p = (
-        "'"
-        '|'
-        '"'
-        '|'
+        r"'"
+        r'|'
+        r'"'
+        r'|'
         # ‘’
-        '\u2018|\u2019'
-        '|'
+        r'\u2018|\u2019'
+        r'|'
         # “”
-        '\u201c|\u201d'
+        r'\u201c|\u201d'
     )
     return check_on_patterns(
         [p],
@@ -439,9 +429,9 @@ def check_e301(text_element):
 
         for pattern, correct_form in PATTERN_WORD:
 
-            p1 = '(?<![a-zA-Z]){0}(?![a-zA-Z])'.format(pattern)
-            p2 = '^{0}(?![a-zA-Z])'.format(pattern)
-            p3 = '(?<![a-zA-Z]){0}$'.format(pattern)
+            p1 = r'(?<![a-zA-Z]){0}(?![a-zA-Z])'.format(pattern)
+            p2 = r'^{0}(?![a-zA-Z])'.format(pattern)
+            p3 = r'(?<![a-zA-Z]){0}$'.format(pattern)
 
             for p in [p1, p2, p3]:
                 for m in re.finditer(
@@ -449,7 +439,7 @@ def check_e301(text_element):
                     flags=re.UNICODE | re.IGNORECASE,
                 ):
                     if m.group(0) != correct_form:
-                        yield m.start(), m.end()
+                        yield m
 
     return check_on_callback(callback, text_element)
 
@@ -515,11 +505,11 @@ def split_text_element(text_element):
 
     # split sentences.
     SENTENCE_SEPS = (
-        '\.{6}'
-        '|'
-        '!|;|\.|\?'
-        '|'
-        '\uff01|\uff1b|\u3002|\uff1f'
+        r'\.{6}'
+        r'|'
+        r'!|;|\.|\?'
+        r'|'
+        r'\uff01|\uff1b|\u3002|\uff1f'
     )
     sentences = []
     for element in elements:
