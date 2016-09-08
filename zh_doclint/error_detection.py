@@ -189,7 +189,8 @@ def detect_e201(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
 
-    p = r'[!-/:-@\[-`\{-~]+'
+    # ignore common shared characters: '@#%&+*-=|~'
+    p = r'[\!\"\$\'\(\)\,\.\:\;\<\>\?\[\\\]\^\_\{\}]+'
     ret = []
     for m in detect_by_patterns(
         [p],
