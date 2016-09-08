@@ -210,6 +210,10 @@ def test_e206():
         [
             '中文!!',
             '中文！！',
+            '中文!！',
+            '中文??',
+            '中文？？',
+            '中文？?',
         ],
         detect_e206,
         should_detected=True,
@@ -219,6 +223,8 @@ def test_e206():
         [
             '中文!',
             '中文！',
+            '中文?',
+            '中文？',
             'english, with space',
         ],
         detect_e206,

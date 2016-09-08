@@ -29,26 +29,45 @@ ZH_SYMBOLS = (
 )
 
 
+# 1: a.
+# 2: whitespaces.
+# 3: b.
 def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
 
     # 1. no space.
     # prefix check.
-    p11 = r'{0}{1}'
+    p11 = r'({0})()({1})'
     # suffix check.
-    p12 = r'{1}{0}'
+    p12 = r'({1})()({0})'
 
     # 2. more than one whitespaces.
     # prefix check.
-    p21 = r'{0}((?!\n)\s){{2,}}{1}'
+    p21 = (
+        r'({0})'
+        r'(((?!\n)\s){{2,}})'
+        r'({1})'
+    )
     # suffix check.
-    p22 = r'{1}((?!\n)\s){{2,}}{0}'
+    p22 = (
+        r'({1})'
+        r'(((?!\n)\s){{2,}})'
+        r'({0})'
+    )
 
     # 3. wrong single whitespace: [\t\r\f\v]
     # only allow ' ' and '\n'.
     # prefix check.
-    p31 = r'{0}(?![ \n])\s{{1}}{1}'
+    p31 = (
+        r'({0})'
+        r'((?![ \n])\s{{1}})'
+        r'({1})'
+    )
     # suffix check.
-    p32 = r'{1}(?![ \n])\s{{1}}{0}'
+    p32 = (
+        r'({1})'
+        r'((?![ \n])\s{{1}})'
+        r'({0})'
+    )
 
     patterns = []
     if a_join_b:
@@ -70,12 +89,23 @@ def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
     ))
 
 
+# 1: a.
+# 2: whitespaces.
+# 3: b.
 def no_space_patterns(a, b):
 
     # prefix check.
-    p1 = r'{0}((?!\n)\s)+{1}'
+    p1 = (
+        r'({0})'
+        r'(((?!\n)\s)+)'
+        r'({1})'
+    )
     # suffix check.
-    p2 = r'{1}((?!\n)\s)+{0}'
+    p2 = (
+        r'({1})'
+        r'(((?!\n)\s)+)'
+        r'({0})'
+    )
 
     return list(map(
         methodcaller('format', a, b),
@@ -123,19 +153,23 @@ def detect_e103(text_element):
     )
 
 
+# 1: whitespaces.
+# 2: left parenthesis.
+# 3: digits.
+# 4: right parenthesis.
 def detect_e104(text_element):
 
     pattern = (
         r'(\s*)'
         r'([(\uff08])'
-        r'\d+'
+        r'(\d+)'
         r'([)\uff09])'
     )
 
     content = text_element.content
 
     for m in re.finditer(pattern, content, flags=re.UNICODE):
-        if m.group(2) != '(' or m.group(3) != ')':
+        if m.group(2) != '(' or m.group(4) != ')':
             yield m
         if m.group(1) not in (' ', '\n'):
             yield m
@@ -152,19 +186,21 @@ def detect_e203(text_element):
     )
 
 
+# 1: ellipsis.
 def detect_e205(text_element):
 
-    p = r'\.{2,}|。{2,}'
+    p = r'(\.{2,}|。{2,})'
     for m in re.finditer(p, text_element.content, flags=re.UNICODE):
         detected = m.group(0)
         if detected[0] != '.' or len(detected) != 6:
             yield m
 
 
+# 1: duplicated marks.
 def detect_e206(text_element):
 
-    p1 = r'!{2,}'
-    p2 = r'！{2,}'
+    p1 = r'([!！]{2,})'
+    p2 = r'([?？]{2,})'
 
     return detect_by_patterns(
         [p1, p2],
@@ -172,9 +208,10 @@ def detect_e206(text_element):
     )
 
 
+# 1: ~
 def detect_e207(text_element):
 
-    p1 = r'~+'
+    p1 = r'(~+)'
 
     return detect_by_patterns(
         [p1],
@@ -186,6 +223,7 @@ def contains_chinese_characters(content):
     return re.search(ZH_CHARACTERS, content, re.UNICODE)
 
 
+# 1: en punctuations.
 def detect_e201(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
@@ -229,8 +267,10 @@ def detect_e201(text_element):
         marks_pattern(r'(?={0})', ['\(\)']),
     ))
 
+    patterns = ['({0})'.format(p) for p in [p1, p2, p3, p4, p5]]
+
     for m in detect_by_patterns(
-        [p1, p2, p3, p4, p5],
+        patterns,
         text_element,
         ignore_matches=set(['......']),
     ):
@@ -248,21 +288,24 @@ def detect_e201(text_element):
     return ret
 
 
+# 1: chineses.
 def detect_e202(text_element):
     if contains_chinese_characters(text_element.content):
         return False
 
     return detect_by_patterns(
-        [ZH_SYMBOLS],
+        ['({0})'.format(ZH_SYMBOLS)],
         text_element,
     )
 
 
+# 1: wrong 「」.
 def detect_e204(text_element):
     if not contains_chinese_characters(text_element.content):
         return False
 
     p = (
+        r'('
         r"'"
         r'|'
         r'"'
@@ -272,6 +315,7 @@ def detect_e204(text_element):
         r'|'
         # “”
         r'\u201c|\u201d'
+        r')'
     )
     return detect_by_patterns(
         [p],
@@ -344,13 +388,14 @@ class SpecialWordHelper(object):
 SpecialWordHelper.init()
 
 
+# 1: wrong special word.
 def detect_e301(text_element):
 
     for correct_form, pattern in SpecialWordHelper.WORD_PATTERN.items():
 
-        p1 = r'(?<![a-zA-Z]){0}(?![a-zA-Z])'.format(pattern)
-        p2 = r'^{0}(?![a-zA-Z])'.format(pattern)
-        p3 = r'(?<![a-zA-Z]){0}$'.format(pattern)
+        p1 = r'(?<![a-zA-Z])({0})(?![a-zA-Z])'.format(pattern)
+        p2 = r'^({0})(?![a-zA-Z])'.format(pattern)
+        p3 = r'(?<![a-zA-Z])({0})$'.format(pattern)
 
         for p in [p1, p2, p3]:
             for m in re.finditer(
