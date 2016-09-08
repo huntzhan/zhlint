@@ -63,16 +63,16 @@ def generate_text_elements(text):
 
 def transform(text):
 
-    # latex-inline.
-    text = re.sub(r'\$.+?\$', '$$', text)
-    text = re.sub(r'\\\(.+?\\\)', '\\\\\(\\\\\)', text)
+    # yaml header.
+    text = remove_block(r'^\s*\-{3}.*?\-{3}', text)
 
-    # latex-block.
+    # latex-block. MUST be executed BEFORE latex-inline.
     text = remove_block(r'\$\$.+?\$\$', text)
     text = remove_block(r'\\\[.+?\\\]', text)
 
-    # yaml header.
-    text = remove_block(r'^\s*\-{3}.*?\-{3}', text)
+    # latex-inline.
+    text = re.sub(r'\$.+?\$', '$$', text)
+    text = re.sub(r'\\\(.+?\\\)', '\\\\\(\\\\\)', text)
 
     # manually add EOF.
     text += '\nEOF\n'

@@ -26,9 +26,12 @@ def eof(text_element):
 
 def test_latex_inline():
     elements = transform(load_test_md('latex_inline.md'))
+    for e in elements:
+        print(repr(e.content))
     assert 'a line with $$ words.\n' == elements[0].content
     assert 'a line with \\(\\) words.\n' == elements[1].content
-    eof(elements[2])
+    assert '会使 $$ 加入到 $$ 中\n' == elements[2].content
+    eof(elements[3])
 
 
 def test_latex_block():

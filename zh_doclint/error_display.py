@@ -58,21 +58,32 @@ def get_loc(text_element, i, j):
 
 
 def generate_detected_text(text_element, i, j):
-    OFFSET = 10
+
+    def inc(char, count):
+        if 0 <= ord(char) <= 127:
+            # for ASCII, increase by 1.
+            return count + 1
+        else:
+            # otherwise, increase by 2.
+            return count + 2
+
+    OFFSET = 20
     content = text_element.content
 
+    # expand to left.
     ri = i
     c = 0
     while ri >= 0 and c < OFFSET and content[ri] != '\n':
         ri -= 1
-        c += 1
+        c = inc(content[ri], c)
     ri = min(ri + 1, i)
 
+    # expand to right.
     rj = j
     c = 0
     while rj < len(content) and c < OFFSET and content[ri] != '\n':
         rj += 1
-        c += 1
+        c = inc(content[ri], c)
     rj = max(rj - 1, j)
 
     text_line = content[ri:rj]
