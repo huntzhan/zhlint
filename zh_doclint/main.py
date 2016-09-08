@@ -11,7 +11,8 @@ import click
 
 from zh_doclint.metadata import VERSION
 from zh_doclint.preprocessor import transform
-from zh_doclint.error_detection import detect_errors
+from zh_doclint.error_detection import process_errors
+from zh_doclint.error_display import ErrorDisplayHandler
 
 
 def load_file(fpath):
@@ -28,9 +29,9 @@ click.disable_unicode_literals_warning = True
 @click.argument('fpath')
 def entry_point(fpath):
 
-    ret = True
-    for text_element in transform(load_file(fpath)):
-        _ret = detect_errors(text_element)
-        ret = ret and _ret
+    display_handler = ErrorDisplayHandler()
 
-    return 0 if ret else 1
+    for text_element in transform(load_file(fpath)):
+        process_errors(display_handler, text_element)
+
+    return 0 if display_handler.detected_error else 1

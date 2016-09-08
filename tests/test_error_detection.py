@@ -18,456 +18,320 @@ from zh_doclint.error_detection import (
     detect_e206,
     detect_e207,
     detect_e301,
-    detect_block_level_error,
 
-    split_text_element,
     detect_e201,
     detect_e202,
     detect_e204,
+
+    split_text_element,
 )
+
+
+def check_texts(inputs, detector, should_detected):
+    elements = []
+
+    for i in inputs:
+        if isinstance(i, str):
+            elements.append(
+                TextElement('', '1', '2', i)
+            )
+        elif isinstance(i, TextElement):
+            elements.append(i)
+        else:
+            raise RuntimeError
+
+    for element in elements:
+        matches = detector(element)
+        if should_detected:
+            assert matches
+            assert list(matches)
+        else:
+            assert not matches or not list(matches)
 
 
 def test_e101():
 
-    te = TextElement(
-        '', '1', '2',
-        '中文english',
+    check_texts(
+        [
+            '中文english',
+            'english中文',
+            '中文  english',
+            'english  中文',
+            '中文\tenglish',
+        ],
+        detect_e101,
+        should_detected=True,
     )
-    assert not detect_e101(te)
 
-    te = TextElement(
-        '', '1', '2',
-        'english中文',
+    check_texts(
+        [
+            '中文 english',
+            'english 中文',
+            '中文\nenglish',
+            '42\n中文',
+        ],
+        detect_e101,
+        should_detected=False,
     )
-    assert not detect_e101(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文  english',
-    )
-    assert not detect_e101(te)
-
-    te = TextElement(
-        '', '1', '2',
-        'english  中文',
-    )
-    assert not detect_e101(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文\tenglish',
-    )
-    assert not detect_e101(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文 english',
-    )
-    assert detect_e101(te)
-
-    te = TextElement(
-        '', '1', '2',
-        'english 中文',
-    )
-    assert detect_e101(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文\nenglish',
-    )
-    assert detect_e101(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42\n中文',
-    )
-    assert detect_e102(te)
 
 
 def test_e102():
 
-    te = TextElement(
-        '', '1', '2',
-        '中文1',
+    check_texts(
+        [
+            '中文1',
+            '42中文',
+            '中文  42',
+            '42  中文',
+            '中文\t42',
+        ],
+        detect_e102,
+        should_detected=True,
     )
-    assert not detect_e102(te)
 
-    te = TextElement(
-        '', '1', '2',
-        '42中文',
+    check_texts(
+        [
+            '中文 42',
+            '42 中文',
+            '中文\n42',
+            '中文 \n42',
+            '42\n中文',
+        ],
+        detect_e102,
+        should_detected=False,
     )
-    assert not detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文  42',
-    )
-    assert not detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42  中文',
-    )
-    assert not detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文\t42',
-    )
-    assert not detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文 42',
-    )
-    assert detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42 中文',
-    )
-    assert detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文\n42',
-    )
-    assert detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文 \n42',
-    )
-    assert detect_e102(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42\n中文',
-    )
-    assert detect_e102(te)
 
 
 def test_e103():
 
-    # te = TextElement(
-    #     '', '1', '2',
-    #     'μ42',
-    # )
-    # assert not detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42μ',
+    check_texts(
+        [
+            '42μ',
+            '42  μ',
+        ],
+        detect_e103,
+        should_detected=True,
     )
-    assert not detect_e103(te)
 
-    # te = TextElement(
-    #     '', '1', '2',
-    #     'μ  42',
-    # )
-    # assert not detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42  μ',
+    check_texts(
+        [
+            '42 μ',
+            'μ\n42',
+            '42\nμ',
+            '42x',
+            '42n',
+            '42％',
+            '42%',
+            '42℃',
+            '，42',
+            '42。',
+            'Q3',
+            '136-4321-1234',
+        ],
+        detect_e103,
+        should_detected=False,
     )
-    assert not detect_e103(te)
-
-    # te = TextElement(
-    #     '', '1', '2',
-    #     'μ\t42',
-    # )
-    # assert not detect_e103(te)
-
-    # te = TextElement(
-    #     '', '1', '2',
-    #     'μ 42',
-    # )
-    # assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42 μ',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        'μ\n42',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42\nμ',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42x',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42n',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42％',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42%',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42℃',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '，42',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42。',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        'Q3',
-    )
-    assert detect_e103(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '136-4321-1234',
-    )
-    assert detect_e103(te)
 
 
 def test_e104():
 
-    te = TextElement(
-        '', '1', '2',
-        '(42）',
+    check_texts(
+        [
+            '(42）',
+            '（42)',
+            '（42）',
+            '42(42)',
+            '42  (42)',
+        ],
+        detect_e104,
+        should_detected=True,
     )
-    assert not detect_e104(te)
 
-    te = TextElement(
-        '', '1', '2',
-        '（42)',
+    check_texts(
+        [
+            '42 (42)',
+            '42\n(42)',
+        ],
+        detect_e104,
+        should_detected=False,
     )
-    assert not detect_e104(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '（42）',
-    )
-    assert not detect_e104(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42(42)',
-    )
-    assert not detect_e104(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42  (42)',
-    )
-    assert not detect_e104(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42 (42)',
-    )
-    assert detect_e104(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '42\n(42)',
-    )
-    assert detect_e104(te)
 
 
 def test_e203():
 
-    te = TextElement(
-        '', '1', '2',
-        '中文， 测试',
+    check_texts(
+        [
+            '中文， 测试',
+            '中文 。测试',
+            '「 中文」',
+        ],
+        detect_e203,
+        should_detected=True,
     )
-    assert not detect_e203(te)
 
-    te = TextElement(
-        '', '1', '2',
-        '中文 。测试',
+    check_texts(
+        [
+            '中文，测试',
+            '中文；测试',
+            '「中文」',
+            '中文！\n测试',
+        ],
+        detect_e203,
+        should_detected=False,
     )
-    assert not detect_e203(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '「 中文」',
-    )
-    assert not detect_e203(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文，测试',
-    )
-    assert detect_e203(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文；测试',
-    )
-    assert detect_e203(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '「中文」',
-    )
-    assert detect_e203(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文！\n测试',
-    )
-    assert detect_e203(te)
 
 
 def test_e205():
 
-    te = TextElement(
-        '', '1', '2',
-        '中文...',
+    check_texts(
+        [
+            '中文...',
+            '中文.......',
+            '中文。。。',
+        ],
+        detect_e205,
+        should_detected=True,
     )
-    assert not detect_e205(te)
 
-    te = TextElement(
-        '', '1', '2',
-        '中文.......',
+    check_texts(
+        [
+            '中文......',
+        ],
+        detect_e205,
+        should_detected=False,
     )
-    assert not detect_e205(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文。。。',
-    )
-    assert not detect_e205(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文......',
-    )
-    assert detect_e205(te)
 
 
 def test_e206():
 
-    te = TextElement(
-        '', '1', '2',
-        '中文!!',
+    check_texts(
+        [
+            '中文!!',
+            '中文！！',
+        ],
+        detect_e206,
+        should_detected=True,
     )
-    assert not detect_e206(te)
 
-    te = TextElement(
-        '', '1', '2',
-        '中文！！',
+    check_texts(
+        [
+            '中文!',
+            '中文！',
+            'english, with space',
+        ],
+        detect_e206,
+        should_detected=False,
     )
-    assert not detect_e206(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文!',
-    )
-    assert detect_e206(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文！',
-    )
-    assert detect_e206(te)
-
-    te = TextElement(
-        '', '1', '2',
-        'english, with space',
-    )
-    assert detect_e203(te)
 
 
 def test_e207():
 
-    te = TextElement(
-        '', '1', '2',
-        '中文~',
+    check_texts(
+        [
+            '中文~',
+        ],
+        detect_e207,
+        should_detected=True,
     )
-    assert not detect_e207(te)
 
-    te = TextElement(
-        '', '1', '2',
-        '中文',
+    check_texts(
+        [
+            '中文',
+        ],
+        detect_e207,
+        should_detected=False,
     )
-    assert detect_e207(te)
 
 
 def test_e301():
 
-    WRONG_WORDS = [
-        'APP',
-        'app',
-        'android',
-        'ios',
-        'IOS',
-        'IPHONE',
-        'iphone',
-        'AppStore',
-        'app store',
-        'wifi',
-        'Wifi',
-        'Wi-fi',
-        'E-mail',
-        'Email',
-        'PS',
-        'ps',
-        'Ps.',
+    check_texts(
+        [
+            'APP',
+            'app',
+            'android',
+            'ios',
+            'IOS',
+            'IPHONE',
+            'iphone',
+            'AppStore',
+            'app store',
+            'wifi',
+            'Wifi',
+            'Wi-fi',
+            'E-mail',
+            'Email',
+            'PS',
+            'ps',
+            'Ps.',
 
-        '我app store我',
-    ]
-
-    for word in WRONG_WORDS:
-        te = TextElement(
-            '', '1', '2',
-            word,
-        )
-        assert not detect_e301(te)
-
-
-def test_block_level_error():
-
-    te = TextElement(
-        '', '1', '2',
-        '好的句子，好的句子',
+            '我app store我',
+        ],
+        detect_e301,
+        should_detected=True,
     )
-    assert detect_block_level_error(te)
 
-    te = TextElement(
-        '', '1', '2',
-        'app好的句子， 好的句子',
+
+def test_e201():
+
+    check_texts(
+        [
+            '有中文, 错误.',
+        ],
+        detect_e201,
+        should_detected=True,
     )
-    assert not detect_block_level_error(te)
+
+    check_texts(
+        [
+            '有中文，正确。',
+            '有中文，正确......',
+            'pure english, nothing wrong.',
+        ],
+        detect_e201,
+        should_detected=False,
+    )
+
+
+def test_e202():
+
+    check_texts(
+        [
+            'pure english，nothing wrong.',
+        ],
+        detect_e202,
+        should_detected=True,
+    )
+
+    check_texts(
+        [
+            'pure english, nothing wrong.',
+        ],
+        detect_e202,
+        should_detected=False,
+    )
+
+
+def test_e204():
+
+    check_texts(
+        [
+            "中文'测试'",
+            '中文"测试"',
+            '中文‘测试’',
+            '中文“测试”',
+        ],
+        detect_e204,
+        should_detected=True,
+    )
+
+    check_texts(
+        [
+            "中文「测试」",
+        ],
+        detect_e204,
+        should_detected=False,
+    )
 
 
 def test_split_text_element():
@@ -509,78 +373,3 @@ i？'''
     )
     lines = help_('content', te)
     assert len(lines) == 9
-
-
-def test_e201():
-
-    te = TextElement(
-        '', '1', '2',
-        '有中文, 错误.',
-    )
-    assert not detect_e201(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '有中文，正确。',
-    )
-    assert detect_e201(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '有中文，正确......',
-    )
-    assert detect_e201(te)
-
-    te = TextElement(
-        '', '1', '2',
-        'pure english, nothing wrong.',
-    )
-    assert detect_e201(te)
-
-
-def test_e202():
-
-    te = TextElement(
-        '', '1', '2',
-        'pure english，nothing wrong.',
-    )
-    assert not detect_e202(te)
-
-    te = TextElement(
-        '', '1', '2',
-        'pure english, nothing wrong.',
-    )
-    assert detect_e202(te)
-
-
-def test_e204():
-
-    te = TextElement(
-        '', '1', '2',
-        "中文'测试'",
-    )
-    assert not detect_e204(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文"测试"',
-    )
-    assert not detect_e204(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文‘测试’',
-    )
-    assert not detect_e204(te)
-
-    te = TextElement(
-        '', '1', '2',
-        '中文“测试”',
-    )
-    assert not detect_e204(te)
-
-    te = TextElement(
-        '', '1', '2',
-        "中文「测试」",
-    )
-    assert detect_e204(te)
