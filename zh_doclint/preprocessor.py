@@ -6,7 +6,6 @@ from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
 import re
-from collections import namedtuple
 
 from mistune import Markdown
 from zh_doclint.mistune_patch import (
@@ -29,10 +28,14 @@ def remove_block(pattern, text):
     return ''.join(segments)
 
 
-TextElement = namedtuple(
-    'TextElement',
-    ['block_type', 'loc_begin', 'loc_end', 'content'],
-)
+class TextElement(object):
+
+    def __init__(self, block_type, loc_begin, loc_end, content, offset=None):
+        self.block_type = block_type
+        self.loc_begin = loc_begin
+        self.loc_end = loc_end
+        self.content = content
+        self.offset = offset
 
 
 def generate_text_elements(text):
@@ -41,7 +44,7 @@ def generate_text_elements(text):
     )
 
     begin = 0
-    text_elements = []
+    elements = []
 
     for m in re.finditer(MARK_PATTERN, text):
         if begin != m.start():
@@ -52,13 +55,13 @@ def generate_text_elements(text):
             content = text[begin:m.start()]
 
             if content.strip():
-                text_elements.append(
+                elements.append(
                     TextElement(block_type, loc_begin, loc_end, content),
                 )
 
         begin = m.end()
 
-    return text_elements
+    return elements
 
 
 def transform(text):

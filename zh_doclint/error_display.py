@@ -46,18 +46,18 @@ def split_bar(symbol, offset, *texts):
     return click.style(symbol * length)
 
 
-def get_loc(text_element, i, j):
-    begin = int(text_element.loc_begin)
+def get_loc(element, i, j):
+    begin = int(element.loc_begin)
     begin += len(list(filter(
-        lambda c: c == '\n', text_element.content[:i],
+        lambda c: c == '\n', element.content[:i],
     )))
     end = begin + len(list(filter(
-        lambda c: c == '\n', text_element.content[i:j],
+        lambda c: c == '\n', element.content[i:j],
     )))
     return begin, end
 
 
-def generate_detected_text(text_element, i, j):
+def generate_detected_text(element, i, j):
 
     def inc(char, count):
         if 0 <= ord(char) <= 127:
@@ -68,7 +68,7 @@ def generate_detected_text(text_element, i, j):
             return count + 2
 
     OFFSET = 20
-    content = text_element.content
+    content = element.content
 
     # expand to left.
     ri = i
@@ -137,7 +137,7 @@ class ErrorDisplayHandler(object):
             click.style('\n'),
         ]
 
-    def body_styles(self, text_element, matches):
+    def body_styles(self, element, matches):
 
         loc_detected = []
         for m in matches:
@@ -147,8 +147,8 @@ class ErrorDisplayHandler(object):
 
         styles = []
         for i, j in sorted(loc_detected):
-            loc = get_loc(text_element, i, j)
-            text_line, mark_line = generate_detected_text(text_element, i, j)
+            loc = get_loc(element, i, j)
+            text_line, mark_line = generate_detected_text(element, i, j)
 
             if loc[0] == loc[1]:
                 loc_text = str(loc[0])
@@ -169,7 +169,7 @@ class ErrorDisplayHandler(object):
             ])
         return styles
 
-    def __call__(self, error_code, text_element, matches):
+    def __call__(self, error_code, element, matches):
         if not matches:
             return
         matches = list(matches)
@@ -181,7 +181,7 @@ class ErrorDisplayHandler(object):
 
         for style in itertools.chain(
             self.header_styles(error_code),
-            self.body_styles(text_element, matches)
+            self.body_styles(element, matches)
         ):
             click.echo(style, nl=False)
         click.echo('\n', nl=False)

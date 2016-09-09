@@ -113,32 +113,32 @@ def no_space_patterns(a, b):
     ))
 
 
-def detect_by_patterns(patterns, text_element, ignore_matches=set()):
+def detect_by_patterns(patterns, element, ignore_matches=set()):
 
     for pattern in patterns:
-        for m in re.finditer(pattern, text_element.content, re.UNICODE):
+        for m in re.finditer(pattern, element.content, re.UNICODE):
             if m.group(0) in ignore_matches:
                 continue
             yield m
 
 
-def detect_e101(text_element):
+def detect_e101(element):
 
     return detect_by_patterns(
         single_space_patterns(ZH_CHARACTERS, r'[a-zA-z]'),
-        text_element,
+        element,
     )
 
 
-def detect_e102(text_element):
+def detect_e102(element):
 
     return detect_by_patterns(
         single_space_patterns(ZH_CHARACTERS, r'\d'),
-        text_element,
+        element,
     )
 
 
-def detect_e103(text_element):
+def detect_e103(element):
 
     return detect_by_patterns(
         single_space_patterns(
@@ -149,7 +149,7 @@ def detect_e103(text_element):
             ),
             b_join_a=False,
         ),
-        text_element,
+        element,
     )
 
 
@@ -157,7 +157,7 @@ def detect_e103(text_element):
 # 2: left parenthesis.
 # 3: digits.
 # 4: right parenthesis.
-def detect_e104(text_element):
+def detect_e104(element):
 
     p1 = (
         r'(?<=[^\s\n]{1})'
@@ -176,60 +176,60 @@ def detect_e104(text_element):
         r'([)\uff09])'
     )
 
-    for m in detect_by_patterns([p1], text_element):
+    for m in detect_by_patterns([p1], element):
         if m.group(2) != '(' or m.group(4) != ')':
             yield m
         if m.group(1) not in (' ', '\n'):
             yield m
 
-    for m in detect_by_patterns([p2], text_element):
+    for m in detect_by_patterns([p2], element):
         if m.group(2) != '(' or m.group(4) != ')':
             yield m
         if m.group(1) != '':
             yield m
 
 
-def detect_e203(text_element):
+def detect_e203(element):
 
     return detect_by_patterns(
         no_space_patterns(
             ZH_SYMBOLS,
             r'(?!{0}|\s).'.format(ZH_SYMBOLS),
         ),
-        text_element,
+        element,
     )
 
 
 # 1: ellipsis.
-def detect_e205(text_element):
+def detect_e205(element):
 
     p = r'(\.{2,}|。{2,})'
-    for m in re.finditer(p, text_element.content, flags=re.UNICODE):
+    for m in re.finditer(p, element.content, flags=re.UNICODE):
         detected = m.group(0)
         if detected[0] != '.' or len(detected) != 6:
             yield m
 
 
 # 1: duplicated marks.
-def detect_e206(text_element):
+def detect_e206(element):
 
     p1 = r'([!！]{2,})'
     p2 = r'([?？]{2,})'
 
     return detect_by_patterns(
         [p1, p2],
-        text_element,
+        element,
     )
 
 
 # 1: ~
-def detect_e207(text_element):
+def detect_e207(element):
 
     p1 = r'(~+)'
 
     return detect_by_patterns(
         [p1],
-        text_element,
+        element,
     )
 
 
@@ -238,8 +238,8 @@ def contains_chinese_characters(content):
 
 
 # 1: en punctuations.
-def detect_e201(text_element):
-    if not contains_chinese_characters(text_element.content):
+def detect_e201(element):
+    if not contains_chinese_characters(element.content):
         return False
 
     PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}')
@@ -289,7 +289,7 @@ def detect_e201(text_element):
 
     patterns = ['({0})'.format(p) for p in [p1, p2, p3, p4, p5]]
 
-    for element in split_by_e104(text_element):
+    for element in split_by_e104(element):
         for m in detect_by_patterns(
             patterns,
             element,
@@ -310,19 +310,19 @@ def detect_e201(text_element):
 
 
 # 1: chineses.
-def detect_e202(text_element):
-    if contains_chinese_characters(text_element.content):
+def detect_e202(element):
+    if contains_chinese_characters(element.content):
         return False
 
     return detect_by_patterns(
         ['({0})'.format(ZH_SYMBOLS)],
-        text_element,
+        element,
     )
 
 
 # 1: wrong 「」.
-def detect_e204(text_element):
-    if not contains_chinese_characters(text_element.content):
+def detect_e204(element):
+    if not contains_chinese_characters(element.content):
         return False
 
     p = (
@@ -340,7 +340,7 @@ def detect_e204(text_element):
     )
     return detect_by_patterns(
         [p],
-        text_element,
+        element,
     )
 
 
@@ -410,7 +410,7 @@ SpecialWordHelper.init()
 
 
 # 1: wrong special word.
-def detect_e301(text_element):
+def detect_e301(element):
 
     for correct_form, pattern in SpecialWordHelper.WORD_PATTERN.items():
 
@@ -420,21 +420,21 @@ def detect_e301(text_element):
 
         for p in [p1, p2, p3]:
             for m in re.finditer(
-                p, text_element.content,
+                p, element.content,
                 flags=re.UNICODE | re.IGNORECASE,
             ):
                 if m.group(0) != correct_form:
                     yield m
 
 
-def process_errors_by_handler(error_codes, error_handler, text_element):
+def process_errors_by_handler(error_codes, error_handler, element):
 
     for error_code in error_codes:
         detector = globals()['detect_{0}'.format(error_code.lower())]
-        error_handler(error_code, text_element, detector(text_element))
+        error_handler(error_code, element, detector(element))
 
 
-def process_block_level_errors(error_handler, text_element):
+def process_block_level_errors(error_handler, element):
 
     process_errors_by_handler(
         [
@@ -451,11 +451,11 @@ def process_block_level_errors(error_handler, text_element):
             'E301',
         ],
         error_handler,
-        text_element,
+        element,
     )
 
 
-def split_text_element(text_element):
+def split_text_element(element):
 
     # block_type should be split by newline first.
     SPLIT_BY_NEWLINES = [
@@ -464,11 +464,11 @@ def split_text_element(text_element):
     ]
 
     elements = []
-    if text_element.block_type not in SPLIT_BY_NEWLINES:
-        elements.append(text_element)
+    if element.block_type not in SPLIT_BY_NEWLINES:
+        elements.append(element)
     else:
-        content = text_element.content
-        loc_begin = int(text_element.loc_begin)
+        content = element.content
+        loc_begin = int(element.loc_begin)
 
         if not content.strip('\n'):
             return []
@@ -567,7 +567,7 @@ def split_text_element(text_element):
     return sentences
 
 
-def process_sentence_level_errors(error_handler, text_element):
+def process_sentence_level_errors(error_handler, element):
 
     process_errors_by_handler(
         [
@@ -576,11 +576,23 @@ def process_sentence_level_errors(error_handler, text_element):
             'E204',
         ],
         error_handler,
-        text_element,
+        element,
     )
 
 
-def process_errors(error_handler, text_element):
-    process_block_level_errors(error_handler, text_element),
-    for sentence in split_text_element(text_element):
+def try_invoke(inst, method_name):
+    method = getattr(inst, method_name, None)
+    if callable(method):
+        method()
+
+
+def process_errors(error_handler, element):
+
+    try_invoke(error_handler, 'before_block_level')
+    process_block_level_errors(error_handler, element),
+    try_invoke(error_handler, 'after_block_level')
+
+    try_invoke(error_handler, 'before_sentence_level')
+    for sentence in split_text_element(element):
         process_sentence_level_errors(error_handler, sentence)
+    try_invoke(error_handler, 'after_sentence_level')

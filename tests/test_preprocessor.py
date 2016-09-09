@@ -20,8 +20,8 @@ def load_test_md(name):
     return open(os.path.join(DATA, name), encoding='utf-8').read()
 
 
-def eof(text_element):
-    assert 'EOF\n' == text_element.content
+def eof(element):
+    assert 'EOF\n' == element.content
 
 
 def test_latex_inline():
