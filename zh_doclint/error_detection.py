@@ -495,15 +495,19 @@ def split_text_element(text_element):
 
     OPEN_PARENTHESIS = set(
         '('
-        '（'
         '['
+        "'"
+        '"'
+        '（'
         '「'
         '『'
     )
     CLOSE_PARENTHESIS = set(
         ')'
-        '）'
         ']'
+        "'"
+        '"'
+        '）'
         '」'
         '』'
     )
