@@ -9,19 +9,21 @@ from zh_doclint.error_correction import ErrorCorrectionHandler
 from zh_doclint.utils import TextElement
 
 
-def test_generate_lcs_matrix():
-    content = (
-        'abc\n'
-        '\n'
-        'abc'
-    )
-    elements = (
-        TextElement('paragraph', '1', '1', 'ac\n'),
-        TextElement('paragraph', '3', '3', 'ac'),
-        'EOF',
-    )
+SIMPLE_CONTENT = (
+    'abc\n'
+    '\n'
+    'abc'
+)
+SIMPLE_ELEMENTS = (
+    TextElement('paragraph', '1', '1', 'ac\n'),
+    TextElement('paragraph', '3', '3', 'ac'),
+    'EOF',
+)
 
-    h = ErrorCorrectionHandler(content, elements)
+
+def test_generate_lcs_matrix():
+
+    h = ErrorCorrectionHandler(SIMPLE_CONTENT, SIMPLE_ELEMENTS)
 
     l1 = [True] * len(h.raw_lines[1])
     l1[1] = False
@@ -36,3 +38,17 @@ def test_generate_lcs_matrix():
 
     l3 = [0, 2]
     assert l3 == h.index_matrix[3]
+
+
+def test_coordinate_query():
+
+    h = ErrorCorrectionHandler(SIMPLE_CONTENT, SIMPLE_ELEMENTS)
+    q = h.coordinate_query
+
+    assert (1, 0) == q.query(0)
+    assert (1, 2) == q.query(2)
+    assert (3, 0) == q.query(3)
+    assert (3, 1) == q.query(4)
+
+    assert (3, 0) == q.query(0, base_loc=3)
+    assert (3, 1) == q.query(1, base_loc=3)

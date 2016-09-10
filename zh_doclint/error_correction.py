@@ -17,52 +17,91 @@ class Diff(object):
     REPLACE = 2
 
 
-def correct_e101(error_code, element, matches, diffs):
+def correct_e101(error_code, element, matches, handler):
     pass
 
 
-def correct_e102(error_code, element, matches, diffs):
+def correct_e102(error_code, element, matches, handler):
     pass
 
 
-def correct_e103(error_code, element, matches, diffs):
+def correct_e103(error_code, element, matches, handler):
     pass
 
 
-def correct_e104(error_code, element, matches, diffs):
+def correct_e104(error_code, element, matches, handler):
     pass
 
 
-def correct_e201(error_code, element, matches, diffs):
+def correct_e201(error_code, element, matches, handler):
     pass
 
 
-def correct_e202(error_code, element, matches, diffs):
+def correct_e202(error_code, element, matches, handler):
     pass
 
 
-def correct_e203(error_code, element, matches, diffs):
+def correct_e203(error_code, element, matches, handler):
     pass
 
 
-def correct_e204(error_code, element, matches, diffs):
+def correct_e204(error_code, element, matches, handler):
     pass
 
 
-def correct_e205(error_code, element, matches, diffs):
+def correct_e205(error_code, element, matches, handler):
     pass
 
 
-def correct_e206(error_code, element, matches, diffs):
+def correct_e206(error_code, element, matches, handler):
     pass
 
 
-def correct_e207(error_code, element, matches, diffs):
+def correct_e207(error_code, element, matches, handler):
     pass
 
 
-def correct_e301(error_code, element, matches, diffs):
+def correct_e301(error_code, element, matches, handler):
     pass
+
+
+class CoordinateQuery(object):
+
+    def __init__(self, parsed_lines):
+        # line_acc[i]: the number of characters from line 1 to line i.
+        self.line_acc = [
+            len(line)
+            for line in chain('', map(lambda x: x or '', parsed_lines))
+        ]
+        for i in range(2, len(self.line_acc)):
+            self.line_acc[i] += self.line_acc[i - 1]
+
+    # input:
+    # offset: 0-based.
+    # base_loc: 1-based.
+    # return:
+    # row: 1-based.
+    # col: 0-based.
+    def query(self, offset, base_loc=1):
+        base_acc = self.line_acc[base_loc - 1]
+        lo = base_loc
+        hi = len(self.line_acc) - 1
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            if offset + 1 <= (self.line_acc[mid] - base_acc):
+                hi = mid
+            else:
+                lo = mid + 1
+
+        row = lo
+        col = 0
+        offset -= (self.line_acc[row - 1] - base_acc)
+
+        while offset > 0:
+            offset -= 1
+            col += 1
+
+        return row, col
 
 
 class ErrorCorrectionHandler(object):
@@ -82,6 +121,9 @@ class ErrorCorrectionHandler(object):
         # mark: one of INSERT, DELETE, REPLACE.
         # row, col: position of parsed content.
         self.diffs = []
+
+        # init CoordinateQuery.
+        self.coordinate_query = CoordinateQuery(self.parsed_lines)
 
     @property
     def max_linenum(self):
