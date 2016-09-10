@@ -23,10 +23,16 @@ def test_generate_lcs_matrix():
 
     h = ErrorCorrectionHandler(content, elements)
 
-    l1 = [True] * len(h.lines[1])
+    l1 = [True] * len(h.raw_lines[1])
     l1[1] = False
     assert l1 == h.lcs_matrix[1]
 
-    l3 = [True] * len(h.lines[3])
+    l3 = [True] * len(h.raw_lines[3])
     l3[1] = False
     assert l3 == h.lcs_matrix[3]
+
+    l1 = [0, 2, 3]
+    assert l1 == h.index_matrix[1]
+
+    l3 = [0, 2]
+    assert l3 == h.index_matrix[3]

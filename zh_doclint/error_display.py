@@ -7,6 +7,7 @@ from future.builtins.disabled import *  # noqa
 
 import re
 import itertools
+import collections as abc
 
 import click
 
@@ -141,6 +142,10 @@ class ErrorDisplayHandler(object):
 
         loc_detected = []
         for m in matches:
+            # support context.
+            if isinstance(m, abc.Sized) and len(m) == 2:
+                m = m[0]
+
             loc_detected.append(
                 (m.start(), m.end()),
             )
