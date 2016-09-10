@@ -5,7 +5,7 @@ from __future__ import (
 from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
-from zh_doclint.preprocessor import TextElement
+from zh_doclint.utils import TextElement
 from zh_doclint.error_detection import (
     process_errors,
 )

@@ -7,18 +7,11 @@
 
 
 from mistune import Renderer, BlockLexer
+from zh_doclint.utils import count_newlines
 
 
 def fmt(text):
     return '%s\n' % text.rstrip('\n')
-
-
-def count_newlines(m):
-    count = 0
-    for c in m.group(0):
-        if c == '\n':
-            count += 1
-    return count
 
 
 class HackedRenderer(Renderer):

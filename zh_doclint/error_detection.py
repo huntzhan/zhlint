@@ -10,7 +10,7 @@ from operator import methodcaller
 from collections import defaultdict
 import itertools
 
-from zh_doclint.preprocessor import TextElement
+from zh_doclint.utils import TextElement, count_newlines, try_invoke
 
 
 ZH_CHARACTERS = (
@@ -542,7 +542,7 @@ def split_text_element(element):
             if level != 0:
                 continue
 
-            newlines = len(list(filter(lambda c: c == '\n', sentence)))
+            newlines = count_newlines(sentence)
 
             sentences.append(
                 TextElement(
@@ -578,12 +578,6 @@ def process_sentence_level_errors(error_handler, element):
         error_handler,
         element,
     )
-
-
-def try_invoke(inst, method_name):
-    method = getattr(inst, method_name, None)
-    if callable(method):
-        method()
 
 
 def process_errors(error_handler, element):

@@ -11,6 +11,8 @@ import collections as abc
 
 import click
 
+from zh_doclint.utils import count_newlines
+
 
 ERROR_DISPLAY = {
     # space.
@@ -49,12 +51,8 @@ def split_bar(symbol, offset, *texts):
 
 def get_loc(element, i, j):
     begin = int(element.loc_begin)
-    begin += len(list(filter(
-        lambda c: c == '\n', element.content[:i],
-    )))
-    end = begin + len(list(filter(
-        lambda c: c == '\n', element.content[i:j],
-    )))
+    begin += count_newlines(element.content[:i])
+    end = begin + count_newlines(element.content[i:j])
     return begin, end
 
 

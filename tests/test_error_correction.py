@@ -6,7 +6,7 @@ from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
 from zh_doclint.error_correction import ErrorCorrectionHandler
-from zh_doclint.error_detection import TextElement
+from zh_doclint.utils import TextElement
 
 
 def test_generate_lcs_matrix():

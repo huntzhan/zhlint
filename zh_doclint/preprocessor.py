@@ -11,6 +11,7 @@ from mistune import Markdown
 from zh_doclint.mistune_patch import (
     HackedRenderer, HackedBlockLexer, count_newlines,
 )
+from zh_doclint.utils import TextElement
 
 
 def remove_block(pattern, text):
@@ -26,16 +27,6 @@ def remove_block(pattern, text):
         segments.append(text[begin:])
 
     return ''.join(segments)
-
-
-class TextElement(object):
-
-    def __init__(self, block_type, loc_begin, loc_end, content, offset=None):
-        self.block_type = block_type
-        self.loc_begin = loc_begin
-        self.loc_end = loc_end
-        self.content = content
-        self.offset = offset
 
 
 def generate_text_elements(text):

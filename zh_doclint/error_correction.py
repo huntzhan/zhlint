@@ -5,26 +5,64 @@ from __future__ import (
 from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
-from io import StringIO
 from itertools import chain
-import collections as abc
 
 from zh_doclint.lcs import lcs_marks
-
-
-def text2lines(text):
-    with StringIO(text) as sin:
-        return sin.readlines()
-
-
-def safelen(line):
-    return 0 if not isinstance(line, abc.Sized) else len(line)
+from zh_doclint.utils import text2lines, safelen
 
 
 class Diff(object):
     INSERT = 0
     DELETE = 1
     REPLACE = 2
+
+
+def correct_e101(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e102(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e103(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e104(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e201(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e202(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e203(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e204(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e205(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e206(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e207(error_code, element, matches, diffs):
+    pass
+
+
+def correct_e301(error_code, element, matches, diffs):
+    pass
 
 
 class ErrorCorrectionHandler(object):
@@ -40,7 +78,7 @@ class ErrorCorrectionHandler(object):
         self.generate_index_matrix()
 
         # store diff operations.
-        # [(mark, row, col)...].
+        # [(row, col, mark)...].
         # mark: one of INSERT, DELETE, REPLACE.
         # row, col: position of parsed content.
         self.diffs = []
