@@ -13,6 +13,7 @@ from zh_doclint.error_correction import (
 )
 from zh_doclint.error_detection import detect_e101  # noqa
 from zh_doclint.error_detection import detect_e102  # noqa
+from zh_doclint.error_detection import detect_e103  # noqa
 
 from zh_doclint.utils import TextElement
 
@@ -165,4 +166,16 @@ def test_correct_e102():
     assert [
         DiffOperation.delete(1, 3),
         DiffOperation.insert(1, 4, val=' '),
+    ] == h.diffs
+
+
+def test_correct_e103():
+    h = simple_init('E103', '42μ')
+    assert [DiffOperation.insert(1, 3, val=' ')] == h.diffs
+
+    h = simple_init('E103', '42  μ')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.insert(1, 5, val=' '),
     ] == h.diffs

@@ -78,7 +78,7 @@ def correct_e102(element, match, handler):
 
 
 def correct_e103(element, match, handler):
-    pass
+    correct_single_space_problem(element, match, handler)
 
 
 def correct_e104(element, match, handler):
