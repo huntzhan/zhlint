@@ -97,13 +97,13 @@ def no_space_patterns(a, b):
     # prefix check.
     p1 = (
         r'({0})'
-        r'(((?!\n)\s)+)'
+        r'((?:(?!\n)\s)+)'
         r'({1})'
     )
     # suffix check.
     p2 = (
         r'({1})'
-        r'(((?!\n)\s)+)'
+        r'((?:(?!\n)\s)+)'
         r'({0})'
     )
 
@@ -140,13 +140,18 @@ def detect_e102(element):
 
 def detect_e103(element):
 
+    p = (
+        # non-digit, non-chinese
+        r'(?:(?!\d|{0}|{1}|[!-/:-@\[-`{{-~]|\s))'
+        # ignore ％, ℃, x, n.
+        r'[^\uff05\u2103xn\%]'
+    )
+    p = p.format(ZH_CHARACTERS, ZH_SYMBOLS)
+
     return detect_by_patterns(
         single_space_patterns(
             r'\d',
-            # non-digit, non-chinese, ％, ℃, x, n.
-            r'(?!\d|{0}|{1}|[!-/:-@\[-`{{-~]|\s)[^\uff05\u2103xn\%]'.format(
-                ZH_CHARACTERS, ZH_SYMBOLS,
-            ),
+            p,
             b_join_a=False,
         ),
         element,
@@ -194,7 +199,7 @@ def detect_e203(element):
     return detect_by_patterns(
         no_space_patterns(
             ZH_SYMBOLS,
-            r'(?!{0}|\s).'.format(ZH_SYMBOLS),
+            r'(?:(?!{0}|\s)).'.format(ZH_SYMBOLS),
         ),
         element,
     )
@@ -415,8 +420,8 @@ def detect_e301(element):
     for correct_form, pattern in SpecialWordHelper.WORD_PATTERN.items():
 
         p1 = r'(?<![a-zA-Z])({0})(?![a-zA-Z])'.format(pattern)
-        p2 = r'^({0})(?![a-zA-Z])'.format(pattern)
-        p3 = r'(?<![a-zA-Z])({0})$'.format(pattern)
+        p2 = r'^()({0})(?![a-zA-Z])'.format(pattern)
+        p3 = r'(?<![a-zA-Z])({0})()$'.format(pattern)
 
         for p in [p1, p2, p3]:
             for m in re.finditer(

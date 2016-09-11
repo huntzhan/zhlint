@@ -98,6 +98,9 @@ def test_correct_e101():
     h = simple_init('E101', '中文english')
     assert [DiffOperation.insert(1, 3, val=' ')] == h.diffs
 
+    h = simple_init('E101', 'english中文')
+    assert [DiffOperation.insert(1, 8, val=' ')] == h.diffs
+
     h = simple_init('E101', '中文   english')
     assert [
         DiffOperation.delete(1, 3),
@@ -106,8 +109,22 @@ def test_correct_e101():
         DiffOperation.insert(1, 6, val=' '),
     ] == h.diffs
 
+    h = simple_init('E101', 'english   中文')
+    assert [
+        DiffOperation.delete(1, 8),
+        DiffOperation.delete(1, 9),
+        DiffOperation.delete(1, 10),
+        DiffOperation.insert(1, 11, val=' '),
+    ] == h.diffs
+
     h = simple_init('E101', '中文\tenglish')
     assert [
         DiffOperation.delete(1, 3),
         DiffOperation.insert(1, 4, val=' '),
+    ] == h.diffs
+
+    h = simple_init('E101', 'english\t中文')
+    assert [
+        DiffOperation.delete(1, 8),
+        DiffOperation.insert(1, 9, val=' '),
     ] == h.diffs
