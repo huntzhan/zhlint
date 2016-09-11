@@ -48,7 +48,8 @@ class DiffOperation(object):
         return str(self).encode('utf-8')
 
 
-def correct_e101(element, match, handler):
+def correct_single_space_problem(element, match, handler):
+
     coordinates = handler.coordinate_query.query_match(
         match, base_loc=element.loc_begin,
     )
@@ -68,8 +69,12 @@ def correct_e101(element, match, handler):
     handler.diffs.append(DiffOperation.insert(x, y, val=' '))
 
 
+def correct_e101(element, match, handler):
+    correct_single_space_problem(element, match, handler)
+
+
 def correct_e102(element, match, handler):
-    pass
+    correct_single_space_problem(element, match, handler)
 
 
 def correct_e103(element, match, handler):

@@ -12,6 +12,8 @@ from zh_doclint.error_correction import (
     DiffOperation,
 )
 from zh_doclint.error_detection import detect_e101  # noqa
+from zh_doclint.error_detection import detect_e102  # noqa
+
 from zh_doclint.utils import TextElement
 
 
@@ -127,4 +129,40 @@ def test_correct_e101():
     assert [
         DiffOperation.delete(1, 8),
         DiffOperation.insert(1, 9, val=' '),
+    ] == h.diffs
+
+
+def test_correct_e102():
+    h = simple_init('E102', '中文42')
+    assert [DiffOperation.insert(1, 3, val=' ')] == h.diffs
+
+    h = simple_init('E102', '42中文')
+    assert [DiffOperation.insert(1, 3, val=' ')] == h.diffs
+
+    h = simple_init('E102', '中文   42')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.delete(1, 5),
+        DiffOperation.insert(1, 6, val=' '),
+    ] == h.diffs
+
+    h = simple_init('E102', '42   中文')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.delete(1, 5),
+        DiffOperation.insert(1, 6, val=' '),
+    ] == h.diffs
+
+    h = simple_init('E102', '中文\t42')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.insert(1, 4, val=' '),
+    ] == h.diffs
+
+    h = simple_init('E102', '42\t中文')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.insert(1, 4, val=' '),
     ] == h.diffs
