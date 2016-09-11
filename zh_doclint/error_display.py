@@ -44,13 +44,11 @@ def split_bar(symbol, offset, *texts):
                 length += 1
             else:
                 length += 2
-    length = int(length)
-
     return click.style(symbol * length)
 
 
 def get_loc(element, i, j):
-    begin = int(element.loc_begin)
+    begin = element.loc_begin
     begin += count_newlines(element.content[:i])
     end = begin + count_newlines(element.content[i:j])
     return begin, end

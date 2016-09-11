@@ -378,8 +378,8 @@ e.'''
     lines, begins, ends = help_(content, '1', '5')
 
     assert ['a\nb.\n', 'c.', ' inline!\n', 'd\ne.'] == lines
-    assert ['1', '3', '3', '4'] == begins
-    assert ['2', '3', '3', '5'] == ends
+    assert [1, 3, 3, 4] == begins
+    assert [2, 3, 3, 5] == ends
 
     content = '''a......
 b!
@@ -405,5 +405,5 @@ sentence 2.'''
     lines, begins, ends = help_(content, '1', '3')
 
     assert ['sentence 1.\n', '   （中文！中文！）\nsentence 2.'] == lines
-    assert ['1', '2'] == begins
-    assert ['1', '3'] == ends
+    assert [1, 2] == begins
+    assert [1, 3] == ends

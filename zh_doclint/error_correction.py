@@ -36,51 +36,62 @@ class DiffOperation(object):
         self.parent = parent
 
 
-def correct_e101(error_code, element, matches, handler):
+def correct_e101(error_code, element, match, handler):
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+    )
+    a, whitespaces, b = match.groups()
+
+    if whitespaces:
+        # delete all whitespaces.
+        pass
+    # no whitespaces between a and b.
+    # insert space between a and b.
+    pass
+    coordinates
+
+
+def correct_e102(error_code, element, match, handler):
     pass
 
 
-def correct_e102(error_code, element, matches, handler):
+def correct_e103(error_code, element, match, handler):
     pass
 
 
-def correct_e103(error_code, element, matches, handler):
+def correct_e104(error_code, element, match, handler):
     pass
 
 
-def correct_e104(error_code, element, matches, handler):
+def correct_e201(error_code, element, match, handler):
     pass
 
 
-def correct_e201(error_code, element, matches, handler):
+def correct_e202(error_code, element, match, handler):
     pass
 
 
-def correct_e202(error_code, element, matches, handler):
+def correct_e203(error_code, element, match, handler):
     pass
 
 
-def correct_e203(error_code, element, matches, handler):
+def correct_e204(error_code, element, match, handler):
     pass
 
 
-def correct_e204(error_code, element, matches, handler):
+def correct_e205(error_code, element, match, handler):
     pass
 
 
-def correct_e205(error_code, element, matches, handler):
+def correct_e206(error_code, element, match, handler):
     pass
 
 
-def correct_e206(error_code, element, matches, handler):
+def correct_e207(error_code, element, match, handler):
     pass
 
 
-def correct_e207(error_code, element, matches, handler):
-    pass
-
-
-def correct_e301(error_code, element, matches, handler):
+def correct_e301(error_code, element, match, handler):
     pass
 
 
@@ -134,12 +145,18 @@ class CoordinateQuery(object):
     # return:
     # [((x1, y1), (x2, y2))...]
     def query_match(self, match, offset=0, base_loc=1):
+        EMPTY_COORDINATE = ((None, None), (None, None))
+
         match_offset = match.start()
         group_sizes = [len(g) for g in match.groups()]
 
         coordinates = []
         acc = 0
         for size in group_sizes:
+            if size == 0:
+                coordinates.append(EMPTY_COORDINATE)
+                continue
+
             start = self.query(match_offset + acc + offset, base_loc)
             end = self.query(match_offset + acc + offset + size - 1, base_loc)
             coordinates.append(
@@ -189,8 +206,8 @@ class ErrorCorrectionHandler(object):
         self.raw_lines[0] = None
 
         for element in elements:
-            lbegin = int(element.loc_begin)
-            lend = int(element.loc_end)
+            lbegin = element.loc_begin
+            lend = element.loc_end
 
             x = ''.join(chain(*lines[lbegin:lend + 1]))
             y = element.content
@@ -211,7 +228,7 @@ class ErrorCorrectionHandler(object):
     def generate_parsed_lines(self, elements):
         self.parsed_lines = [None] * self.max_linenum
         for element in elements:
-            lbegin = int(element.loc_begin)
+            lbegin = element.loc_begin
             for i, line in enumerate(text2lines(element.content)):
                 self.parsed_lines[lbegin + i] = line
 
@@ -232,4 +249,5 @@ class ErrorCorrectionHandler(object):
 
     def __call__(self, error_code, element, matches):
         corrector = globals()['correct_{0}'.format(error_code.lower())]
-        corrector(error_code, element, matches, self.diffs)
+        for match in matches:
+            corrector(error_code, element, match, self)

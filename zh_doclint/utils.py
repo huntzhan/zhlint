@@ -54,7 +54,7 @@ class TextElement(object):
 
     def __init__(self, block_type, loc_begin, loc_end, content, offset=None):
         self.block_type = block_type
-        self.loc_begin = loc_begin
-        self.loc_end = loc_end
+        self.loc_begin = int(loc_begin)
+        self.loc_end = int(loc_end)
         self.content = content
         self.offset = offset

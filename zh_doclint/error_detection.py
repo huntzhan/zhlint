@@ -468,7 +468,7 @@ def split_text_element(element):
         elements.append(element)
     else:
         content = element.content
-        loc_begin = int(element.loc_begin)
+        loc_begin = element.loc_begin
 
         if not content.strip('\n'):
             return []
@@ -478,7 +478,7 @@ def split_text_element(element):
                 elements.append(
                     TextElement(
                         'paragraph',
-                        str(loc_begin), str(loc_begin),
+                        loc_begin, loc_begin,
                         line,
                     )
                 )
@@ -517,7 +517,7 @@ def split_text_element(element):
     for element in elements:
         content = element.content.strip('\n')
 
-        loc_begin = int(element.loc_begin)
+        loc_begin = element.loc_begin
         sbegin = 0
 
         for m in re.finditer(SENTENCE_DELIMITERS, content, flags=re.UNICODE):
@@ -547,8 +547,8 @@ def split_text_element(element):
             sentences.append(
                 TextElement(
                     'paragraph',
-                    str(loc_begin),
-                    str(loc_begin + newlines - tailing_newlines),
+                    loc_begin,
+                    loc_begin + newlines - tailing_newlines,
                     sentence,
                 )
             )
@@ -560,7 +560,7 @@ def split_text_element(element):
             sentences.append(
                 TextElement(
                     'paragraph',
-                    str(loc_begin), str(loc_begin),
+                    loc_begin, loc_begin,
                     content[sbegin:],
                 )
             )

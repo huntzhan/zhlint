@@ -64,8 +64,16 @@ def test_coordinate_query():
     ] == q.query_match(m)
 
     text = q.text(2, 3)
-    print(text)
     m = re.search(r'(ac)', text)
     assert [
         ((3, 0), (3, 1)),
     ] == q.query_match(m, base_loc=2)
+
+    # empty group.
+    text = q.text()
+    m = re.search(r'(a)()(c)', text)
+    assert [
+        ((1, 0), (1, 0)),
+        ((None, None), (None, None)),
+        ((1, 1), (1, 1)),
+    ] == q.query_match(m)
