@@ -27,18 +27,18 @@ def test_generate_lcs_matrix():
 
     h = ErrorCorrectionHandler(SIMPLE_CONTENT, SIMPLE_ELEMENTS)
 
-    l1 = [True] * len(h.raw_lines[1])
-    l1[1] = False
+    l1 = [True] * (len(h.raw_lines[1]) + 1)
+    l1[0] = l1[2] = False
     assert l1 == h.lcs_matrix[1]
 
-    l3 = [True] * len(h.raw_lines[3])
-    l3[1] = False
+    l3 = [True] * (len(h.raw_lines[3]) + 1)
+    l3[0] = l3[2] = False
     assert l3 == h.lcs_matrix[3]
 
-    l1 = [0, 2, 3]
+    l1 = [1, 3, 4]
     assert l1 == h.index_matrix[1]
 
-    l3 = [0, 2]
+    l3 = [1, 3]
     assert l3 == h.index_matrix[3]
 
 
@@ -47,33 +47,33 @@ def test_coordinate_query():
     h = ErrorCorrectionHandler(SIMPLE_CONTENT, SIMPLE_ELEMENTS)
     q = h.coordinate_query
 
-    assert (1, 0) == q.query(0)
-    assert (1, 2) == q.query(2)
-    assert (3, 0) == q.query(3)
-    assert (3, 1) == q.query(4)
+    assert (1, 1) == q.query(0)
+    assert (1, 4) == q.query(2)
+    assert (3, 1) == q.query(3)
+    assert (3, 3) == q.query(4)
 
-    assert (3, 0) == q.query(0, base_loc=3)
-    assert (3, 1) == q.query(1, base_loc=3)
+    assert (3, 1) == q.query(0, base_loc=3)
+    assert (3, 3) == q.query(1, base_loc=3)
 
     text = q.text()
     m = re.search(r'(ac)(\s+)(ac)', text)
     assert [
-        ((1, 0), (1, 1)),
-        ((1, 2), (1, 2)),
-        ((3, 0), (3, 1)),
+        [(1, 1), (1, 3)],
+        [(1, 4)],
+        [(3, 1), (3, 3)],
     ] == q.query_match(m)
 
     text = q.text(2, 3)
     m = re.search(r'(ac)', text)
     assert [
-        ((3, 0), (3, 1)),
+        [(3, 1), (3, 3)],
     ] == q.query_match(m, base_loc=2)
 
     # empty group.
     text = q.text()
     m = re.search(r'(a)()(c)', text)
     assert [
-        ((1, 0), (1, 0)),
-        ((None, None), (None, None)),
-        ((1, 1), (1, 1)),
+        [(1, 1)],
+        [],
+        [(1, 3)],
     ] == q.query_match(m)

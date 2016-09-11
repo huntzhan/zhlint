@@ -97,16 +97,21 @@ def correct_e301(error_code, element, match, handler):
 
 class CoordinateQuery(object):
 
-    def __init__(self, parsed_lines):
-        # line_acc[i]: the number of characters from line 1 to line i.
-        self.line_acc = [
+    def __init__(self, index_matrix, lcs_matrix, parsed_lines):
+        # line_size[i]: the number of characters in line i.
+        line_size = [
             len(line)
             for line in chain('', map(lambda x: x or '', parsed_lines))
         ]
-        for i in range(2, len(self.line_acc)):
-            self.line_acc[i] += self.line_acc[i - 1]
+
+        # line_acc[i]: the number of characters from line 1 to line i.
+        self.line_acc = [0] * len(line_size)
+        for i in range(1, len(self.line_acc)):
+            self.line_acc[i] = self.line_acc[i - 1] + line_size[i]
 
         self.parsed_lines = parsed_lines
+        self.index_matrix = index_matrix
+        self.lcs_matrix = lcs_matrix
 
     # mainly for testing.
     # return: text from line begin to line end, including end.
@@ -118,35 +123,33 @@ class CoordinateQuery(object):
     # input:
     # offset: 0-based.
     # base_loc: 1-based.
-    # return:
+    #
+    # return: coordinate of original matrix.
     # row: 1-based.
-    # col: 0-based.
-    def query(self, offset, base_loc=1):
+    # col: 1-based.
+    def query(self, parsed_offset, base_loc=1):
         base_acc = self.line_acc[base_loc - 1]
         lo = base_loc
         hi = len(self.line_acc) - 1
         while lo < hi:
             mid = lo + (hi - lo) // 2
-            if offset + 1 <= (self.line_acc[mid] - base_acc):
+            if parsed_offset + 1 <= (self.line_acc[mid] - base_acc):
                 hi = mid
             else:
                 lo = mid + 1
 
+        # 1-based row index.
         row = lo
-        col = 0
-        offset -= (self.line_acc[row - 1] - base_acc)
-
-        while offset > 0:
-            offset -= 1
-            col += 1
+        # 0-based.
+        col = parsed_offset - self.line_acc[lo - 1] + base_acc
+        # 1-based col index.
+        col = self.index_matrix[row][col]
 
         return row, col
 
     # return:
-    # [((x1, y1), (x2, y2))...]
+    # [((x1, y1), (x2, y2), ...)...]
     def query_match(self, match, offset=0, base_loc=1):
-        EMPTY_COORDINATE = ((None, None), (None, None))
-
         match_offset = match.start()
         group_sizes = [len(g) for g in match.groups()]
 
@@ -154,14 +157,25 @@ class CoordinateQuery(object):
         acc = 0
         for size in group_sizes:
             if size == 0:
-                coordinates.append(EMPTY_COORDINATE)
+                coordinates.append([])
                 continue
 
             start = self.query(match_offset + acc + offset, base_loc)
             end = self.query(match_offset + acc + offset + size - 1, base_loc)
-            coordinates.append(
-                (start, end),
-            )
+
+            group_coordinates = []
+            row, col = start
+            while (row, col) <= end:
+                if self.lcs_matrix[row][col]:
+                    group_coordinates.append(
+                        (row, col),
+                    )
+                col += 1
+                if col == len(self.lcs_matrix[row]):
+                    row += 1
+                    col = 0
+
+            coordinates.append(group_coordinates)
             acc += size
 
         return coordinates
@@ -183,7 +197,9 @@ class ErrorCorrectionHandler(object):
         self.diffs = []
 
         # init CoordinateQuery.
-        self.coordinate_query = CoordinateQuery(self.parsed_lines)
+        self.coordinate_query = CoordinateQuery(
+            self.index_matrix, self.lcs_matrix, self.parsed_lines,
+        )
 
     @property
     def max_linenum(self):
@@ -200,7 +216,7 @@ class ErrorCorrectionHandler(object):
         lines = text2lines(file_content)
         lines.insert(0, [])
 
-        self.lcs_matrix = [[False] * len(line) for line in lines]
+        self.lcs_matrix = [[False] * (len(line) + 1) for line in lines]
 
         self.raw_lines = lines
         self.raw_lines[0] = None
@@ -213,15 +229,16 @@ class ErrorCorrectionHandler(object):
             y = element.content
 
             marks = lcs_marks(x, y)
+
             row = lbegin
-            col = 0
+            col = 1
             mi = 0
             while row <= lend:
                 self.lcs_matrix[row][col] = marks[mi]
                 mi += 1
                 if col == len(self.lcs_matrix[row]) - 1:
                     row += 1
-                    col = 0
+                    col = 1
                 else:
                     col += 1
 
@@ -238,7 +255,7 @@ class ErrorCorrectionHandler(object):
             parsed_line, ln = self.parsed_line(row)
             index_mapping = [None] * ln
 
-            rawcol = 0
+            rawcol = 1
             for col in range(ln):
                 while not self.lcs_matrix[row][rawcol]:
                     rawcol += 1
