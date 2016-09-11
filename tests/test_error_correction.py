@@ -10,10 +10,12 @@ import re
 from zh_doclint.error_correction import (
     ErrorCorrectionHandler,
     DiffOperation,
+    INT_MAX,
 )
 from zh_doclint.error_detection import detect_e101  # noqa
 from zh_doclint.error_detection import detect_e102  # noqa
 from zh_doclint.error_detection import detect_e103  # noqa
+from zh_doclint.error_detection import detect_e104  # noqa
 
 from zh_doclint.utils import TextElement
 
@@ -178,4 +180,38 @@ def test_correct_e103():
         DiffOperation.delete(1, 3),
         DiffOperation.delete(1, 4),
         DiffOperation.insert(1, 5, val=' '),
+    ] == h.diffs
+
+
+def test_correct_e104():
+    h = simple_init('E104', '(42）')
+    assert [
+        DiffOperation.delete(1, 4),
+        DiffOperation.insert(INT_MAX, INT_MAX, val=')'),
+    ] == h.diffs
+
+    h = simple_init('E104', '（42）')
+    assert [
+        DiffOperation.delete(1, 1),
+        DiffOperation.insert(1, 2, val='('),
+        DiffOperation.delete(1, 4),
+        DiffOperation.insert(INT_MAX, INT_MAX, val=')'),
+    ] == h.diffs
+
+    h = simple_init('E104', '42(42)')
+    assert [
+        DiffOperation.insert(1, 3, val=' '),
+    ] == h.diffs
+
+    h = simple_init('E104', '42  (42)')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.insert(1, 5, val=' '),
+    ] == h.diffs
+
+    h = simple_init('E104', '  (42)')
+    assert [
+        DiffOperation.delete(1, 1),
+        DiffOperation.delete(1, 2),
     ] == h.diffs

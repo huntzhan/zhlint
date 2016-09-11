@@ -165,7 +165,7 @@ def detect_e103(element):
 def detect_e104(element):
 
     p1 = (
-        r'(?<=[^\s\n]{1})'
+        r'(?<=[^\s]{1})'
         r'(\s*)'
         r'([(\uff08])'
         r'(\d+)'
@@ -181,17 +181,21 @@ def detect_e104(element):
         r'([)\uff09])'
     )
 
-    for m in detect_by_patterns([p1], element):
-        if m.group(2) != '(' or m.group(4) != ')':
-            yield m
-        if m.group(1) not in (' ', '\n'):
-            yield m
+    patterns = [p1, p2]
+    for i, p in enumerate(patterns):
+        for m in detect_by_patterns([p], element):
+            yield_tag = None
+            if m.group(2) != '(' or m.group(4) != ')':
+                yield_tag = 0
+            # preceded by non-whitespace.
+            if i == 0 and m.group(1) not in (' ', '\n'):
+                yield_tag = 1
+            # preceded by nothing or newline.
+            if i == 1 and m.group(1) != '':
+                yield_tag = 2
 
-    for m in detect_by_patterns([p2], element):
-        if m.group(2) != '(' or m.group(4) != ')':
-            yield m
-        if m.group(1) != '':
-            yield m
+            if yield_tag is not None:
+                yield m, yield_tag
 
 
 def detect_e203(element):

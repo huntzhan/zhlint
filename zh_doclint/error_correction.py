@@ -11,6 +11,9 @@ from zh_doclint.lcs import lcs_marks
 from zh_doclint.utils import text2lines, safelen
 
 
+INT_MAX = 1 << 31 - 1
+
+
 class DiffOperation(object):
 
     INSERT = 0
@@ -48,6 +51,22 @@ class DiffOperation(object):
         return str(self).encode('utf-8')
 
 
+def add_diff_operations(attr, coordinates, diffs, val=None):
+    func = getattr(DiffOperation, attr)
+    ops = [func(x, y, val=val) for x, y in coordinates]
+    for i in range(1, len(ops)):
+        ops[i].parent = ops[i - 1]
+    diffs.extend(ops)
+
+
+def delete_group(coordinates, diffs):
+    add_diff_operations('delete', coordinates, diffs)
+
+
+def insert_before(coordinate, diffs, val):
+    add_diff_operations('insert', [coordinate], diffs, val=val)
+
+
 def correct_single_space_problem(element, match, handler):
 
     coordinates = handler.coordinate_query.query_match(
@@ -58,15 +77,11 @@ def correct_single_space_problem(element, match, handler):
 
     if whitespaces:
         # delete all whitespaces.
-        ops = [DiffOperation.delete(x, y) for x, y in coordinates[1]]
-        for i in range(1, len(ops)):
-            ops[i].parent = ops[i - 1]
-        handler.diffs.extend(ops)
+        delete_group(coordinates[1], handler.diffs)
 
     # no whitespaces between a and b.
     # insert space between a and b.
-    x, y = coordinates[2][0]
-    handler.diffs.append(DiffOperation.insert(x, y, val=' '))
+    insert_before(coordinates[2][0], handler.diffs, val=' ')
 
 
 def correct_e101(element, match, handler):
@@ -82,7 +97,25 @@ def correct_e103(element, match, handler):
 
 
 def correct_e104(element, match, handler):
-    pass
+    match, tag = match
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+        add_right_boundary=True,
+    )
+    whitespaces, lparenthesis, digits, rparenthesis = match.groups()
+
+    # deal with spaces.
+    if tag != 0:
+        delete_group(coordinates[0], handler.diffs)
+        if tag == 1:
+            insert_before(coordinates[1][0], handler.diffs, val=' ')
+
+    if lparenthesis != '(':
+        delete_group(coordinates[1], handler.diffs)
+        insert_before(coordinates[2][0], handler.diffs, val='(')
+    if rparenthesis != ')':
+        delete_group(coordinates[3], handler.diffs)
+        insert_before(coordinates[4][0], handler.diffs, val=')')
 
 
 def correct_e201(element, match, handler):
@@ -164,16 +197,25 @@ class CoordinateQuery(object):
         row = lo
         # 0-based.
         col = parsed_offset - self.line_acc[lo - 1] + base_acc
+        # corner case: reach EOF.
+        if (
+            row == len(self.index_matrix) - 1 and
+            col == len(self.index_matrix[row])
+        ):
+            return None, None
+
         # 1-based col index.
         col = self.index_matrix[row][col]
-
         return row, col
 
     # return:
     # [((x1, y1), (x2, y2), ...)...]
-    def query_match(self, match, offset=0, base_loc=1):
+    def query_match(self, match, offset=0, base_loc=1,
+                    add_right_boundary=False):
         match_offset = match.start()
         group_sizes = [len(g) for g in match.groups()]
+        if add_right_boundary:
+            group_sizes.append(1)
 
         coordinates = []
         acc = 0
@@ -187,6 +229,13 @@ class CoordinateQuery(object):
 
             group_coordinates = []
             row, col = start
+            # reach EOF.
+            if row is None and col is None:
+                coordinates.append(
+                    [(INT_MAX, INT_MAX)]
+                )
+                break
+
             while (row, col) <= end:
                 if self.lcs_matrix[row][col]:
                     group_coordinates.append(
