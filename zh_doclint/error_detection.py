@@ -44,13 +44,13 @@ def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
     # prefix check.
     p21 = (
         r'({0})'
-        r'(((?!\n)\s){{2,}})'
+        r'((?:(?!\n)\s){{2,}})'
         r'({1})'
     )
     # suffix check.
     p22 = (
         r'({1})'
-        r'(((?!\n)\s){{2,}})'
+        r'((?:(?!\n)\s){{2,}})'
         r'({0})'
     )
 
@@ -59,13 +59,13 @@ def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
     # prefix check.
     p31 = (
         r'({0})'
-        r'((?![ \n])\s{{1}})'
+        r'((?:(?![ \n])\s){{1}})'
         r'({1})'
     )
     # suffix check.
     p32 = (
         r'({1})'
-        r'((?![ \n])\s{{1}})'
+        r'((?:(?![ \n])\s){{1}})'
         r'({0})'
     )
 

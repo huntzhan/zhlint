@@ -7,7 +7,11 @@ from future.builtins.disabled import *  # noqa
 
 import re
 
-from zh_doclint.error_correction import ErrorCorrectionHandler
+from zh_doclint.error_correction import (
+    ErrorCorrectionHandler,
+    DiffOperation,
+)
+from zh_doclint.error_detection import detect_e101  # noqa
 from zh_doclint.utils import TextElement
 
 
@@ -77,3 +81,33 @@ def test_coordinate_query():
         [],
         [(1, 3)],
     ] == q.query_match(m)
+
+
+def simple_init(error_code, text):
+    te = TextElement('', 1, 1, text)
+    h = ErrorCorrectionHandler(
+        text,
+        (te, 'EOF'),
+    )
+    detector = globals()['detect_{0}'.format(error_code.lower())]
+    h(error_code, te, detector(te))
+    return h
+
+
+def test_correct_e101():
+    h = simple_init('E101', '中文english')
+    assert [DiffOperation.insert(1, 3, val=' ')] == h.diffs
+
+    h = simple_init('E101', '中文   english')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.delete(1, 5),
+        DiffOperation.insert(1, 6, val=' '),
+    ] == h.diffs
+
+    h = simple_init('E101', '中文\tenglish')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.insert(1, 4, val=' '),
+    ] == h.diffs

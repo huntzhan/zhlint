@@ -29,69 +29,86 @@ class DiffOperation(object):
     def replace(*args, **kwargs):
         return DiffOperation(DiffOperation.REPLACE, *args, **kwargs)
 
-    def __init__(self, tag, row, col, parent=None):
+    def __init__(self, tag, row, col, val=None, parent=None):
         self.tag = tag
         self.row = row
         self.col = col
+        self.val = val
         self.parent = parent
 
+        self._attrs = (self.tag, self.row, self.col, self.val, self.parent)
 
-def correct_e101(error_code, element, match, handler):
+    def __eq__(self, other):
+        return self._attrs == other._attrs
+
+    def __str__(self):
+        return '<{0}>'.format(', '.join(map(str, self._attrs)))
+
+    def __repr__(self):
+        return str(self).encode('utf-8')
+
+
+def correct_e101(element, match, handler):
     coordinates = handler.coordinate_query.query_match(
         match, base_loc=element.loc_begin,
     )
+    print(match.groups())
     a, whitespaces, b = match.groups()
 
     if whitespaces:
         # delete all whitespaces.
-        pass
+        ops = [DiffOperation.delete(x, y) for x, y in coordinates[1]]
+        for i in range(1, len(ops)):
+            ops[i].parent = ops[i - 1]
+        handler.diffs.extend(ops)
+
     # no whitespaces between a and b.
     # insert space between a and b.
-    pass
-    coordinates
+    x, y = coordinates[2][0]
+    handler.diffs.append(DiffOperation.insert(x, y, val=' '))
 
 
-def correct_e102(error_code, element, match, handler):
-    pass
-
-
-def correct_e103(error_code, element, match, handler):
+def correct_e102(element, match, handler):
     pass
 
 
-def correct_e104(error_code, element, match, handler):
+def correct_e103(element, match, handler):
     pass
 
 
-def correct_e201(error_code, element, match, handler):
+def correct_e104(element, match, handler):
     pass
 
 
-def correct_e202(error_code, element, match, handler):
+def correct_e201(element, match, handler):
     pass
 
 
-def correct_e203(error_code, element, match, handler):
+def correct_e202(element, match, handler):
     pass
 
 
-def correct_e204(error_code, element, match, handler):
+def correct_e203(element, match, handler):
     pass
 
 
-def correct_e205(error_code, element, match, handler):
+def correct_e204(element, match, handler):
     pass
 
 
-def correct_e206(error_code, element, match, handler):
+def correct_e205(element, match, handler):
     pass
 
 
-def correct_e207(error_code, element, match, handler):
+def correct_e206(element, match, handler):
     pass
 
 
-def correct_e301(error_code, element, match, handler):
+def correct_e207(element, match, handler):
+    pass
+
+
+def correct_e301(element, match, handler):
     pass
 
 
@@ -267,4 +284,4 @@ class ErrorCorrectionHandler(object):
     def __call__(self, error_code, element, matches):
         corrector = globals()['correct_{0}'.format(error_code.lower())]
         for match in matches:
-            corrector(error_code, element, match, self)
+            corrector(element, match, self)
