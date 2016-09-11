@@ -5,6 +5,8 @@ from __future__ import (
 from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
+import re
+
 from zh_doclint.error_correction import ErrorCorrectionHandler
 from zh_doclint.utils import TextElement
 
@@ -52,3 +54,18 @@ def test_coordinate_query():
 
     assert (3, 0) == q.query(0, base_loc=3)
     assert (3, 1) == q.query(1, base_loc=3)
+
+    text = q.text()
+    m = re.search(r'(ac)(\s+)(ac)', text)
+    assert [
+        ((1, 0), (1, 1)),
+        ((1, 2), (1, 2)),
+        ((3, 0), (3, 1)),
+    ] == q.query_match(m)
+
+    text = q.text(2, 3)
+    print(text)
+    m = re.search(r'(ac)', text)
+    assert [
+        ((3, 0), (3, 1)),
+    ] == q.query_match(m, base_loc=2)

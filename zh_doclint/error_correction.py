@@ -11,10 +11,29 @@ from zh_doclint.lcs import lcs_marks
 from zh_doclint.utils import text2lines, safelen
 
 
-class Diff(object):
+class DiffOperation(object):
+
     INSERT = 0
     DELETE = 1
     REPLACE = 2
+
+    @staticmethod
+    def insert(*args, **kwargs):
+        return DiffOperation(DiffOperation.INSERT, *args, **kwargs)
+
+    @staticmethod
+    def delete(*args, **kwargs):
+        return DiffOperation(DiffOperation.DELETE, *args, **kwargs)
+
+    @staticmethod
+    def replace(*args, **kwargs):
+        return DiffOperation(DiffOperation.REPLACE, *args, **kwargs)
+
+    def __init__(self, tag, row, col, parent=None):
+        self.tag = tag
+        self.row = row
+        self.col = col
+        self.parent = parent
 
 
 def correct_e101(error_code, element, matches, handler):
@@ -76,6 +95,15 @@ class CoordinateQuery(object):
         for i in range(2, len(self.line_acc)):
             self.line_acc[i] += self.line_acc[i - 1]
 
+        self.parsed_lines = parsed_lines
+
+    # mainly for testing.
+    # return: text from line begin to line end, including end.
+    def text(self, begin=1, end=None):
+        end = end or len(self.parsed_lines) - 1
+        end += 1
+        return ''.join(map(lambda x: x or '', self.parsed_lines[begin:end]))
+
     # input:
     # offset: 0-based.
     # base_loc: 1-based.
@@ -103,6 +131,24 @@ class CoordinateQuery(object):
 
         return row, col
 
+    # return:
+    # [((x1, y1), (x2, y2))...]
+    def query_match(self, match, offset=0, base_loc=1):
+        match_offset = match.start()
+        group_sizes = [len(g) for g in match.groups()]
+
+        coordinates = []
+        acc = 0
+        for size in group_sizes:
+            start = self.query(match_offset + acc + offset, base_loc)
+            end = self.query(match_offset + acc + offset + size - 1, base_loc)
+            coordinates.append(
+                (start, end),
+            )
+            acc += size
+
+        return coordinates
+
 
 class ErrorCorrectionHandler(object):
 
@@ -117,9 +163,6 @@ class ErrorCorrectionHandler(object):
         self.generate_index_matrix()
 
         # store diff operations.
-        # [(row, col, mark)...].
-        # mark: one of INSERT, DELETE, REPLACE.
-        # row, col: position of parsed content.
         self.diffs = []
 
         # init CoordinateQuery.
