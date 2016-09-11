@@ -50,6 +50,16 @@ def count_newlines_in_match(m):
     return count_newlines_in_str(m.group(0))
 
 
+def count_offset(prefix):
+    offset = 0
+    for c in reversed(prefix):
+        if c == '\n':
+            break
+        else:
+            offset += 1
+    return offset
+
+
 class TextElement(object):
 
     def __init__(self, block_type, loc_begin, loc_end, content, offset=None):

@@ -10,7 +10,12 @@ from operator import methodcaller
 from collections import defaultdict
 import itertools
 
-from zh_doclint.utils import TextElement, count_newlines, try_invoke
+from zh_doclint.utils import (
+    TextElement,
+    count_newlines,
+    count_offset,
+    try_invoke
+)
 
 
 ZH_CHARACTERS = (
@@ -552,6 +557,7 @@ def split_text_element(element):
                 continue
 
             newlines = count_newlines(sentence)
+            offset = count_offset(content[:sbegin])
 
             sentences.append(
                 TextElement(
@@ -559,6 +565,7 @@ def split_text_element(element):
                     loc_begin,
                     loc_begin + newlines - tailing_newlines,
                     sentence,
+                    offset=offset,
                 )
             )
 

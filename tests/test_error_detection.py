@@ -366,8 +366,9 @@ def test_split_text_element():
         lines = access('content', te)
         begins = access('loc_begin', te)
         ends = access('loc_end', te)
+        offsets = access('offset', te)
 
-        return lines, begins, ends
+        return lines, begins, ends, offsets
 
     content = '''a
 b.
@@ -375,11 +376,12 @@ c. inline!
 d
 e.'''
 
-    lines, begins, ends = help_(content, '1', '5')
+    lines, begins, ends, offsets = help_(content, '1', '5')
 
     assert ['a\nb.\n', 'c.', ' inline!\n', 'd\ne.'] == lines
     assert [1, 3, 3, 4] == begins
     assert [2, 3, 3, 5] == ends
+    assert [0, 0, 2, 0] == offsets
 
     content = '''a......
 b!
@@ -391,19 +393,20 @@ g；
 h。
 i？'''
 
-    lines, begins, ends = help_(content, '1', '9')
+    lines, begins, ends, offsets = help_(content, '1', '9')
     assert len(lines) == 9
 
     content = '''P.S. this is a line!'''
 
-    lines, begins, ends = help_(content, '1', '9')
+    lines, begins, ends, offsets = help_(content, '1', '9')
     assert len(lines) == 1
 
     content = '''sentence 1.
    （中文！中文！）
 sentence 2.'''
-    lines, begins, ends = help_(content, '1', '3')
+    lines, begins, ends, offsets = help_(content, '1', '3')
 
     assert ['sentence 1.\n', '   （中文！中文！）\nsentence 2.'] == lines
     assert [1, 2] == begins
     assert [1, 3] == ends
+    assert [0, 0] == offsets
