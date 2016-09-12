@@ -252,11 +252,12 @@ def contains_chinese_characters(content):
 
 
 # 1: en punctuations.
+# 2: whitespaces.
 def detect_e201(element):
     if not contains_chinese_characters(element.content):
         return False
 
-    PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}')
+    PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}/')
 
     def marks_pattern(pattern_template, texts):
 
@@ -278,7 +279,7 @@ def detect_e201(element):
     ret = []
 
     # gerneral forms, ignore common shared characters: '@#%&+*-=|~'
-    p1 = r'[{0}]+'.format(re.escape(''.join(PUNCTUATIONS)))
+    p1 = r'([{0}]+)(\s*)'.format(re.escape(''.join(PUNCTUATIONS)))
 
     # prefix
     p2 = ''.join(itertools.chain(
@@ -301,7 +302,7 @@ def detect_e201(element):
         marks_pattern(r'(?={0})', ['\(\)']),
     ))
 
-    patterns = ['({0})'.format(p) for p in [p1, p2, p3, p4, p5]]
+    patterns = [p1, p2, p3, p4, p5]
 
     for element in split_by_e104(element):
         for m in detect_by_patterns(
@@ -341,15 +342,19 @@ def detect_e204(element):
 
     p = (
         r'('
-        r"'"
-        r'|'
-        r'"'
-        r'|'
+
+        # ', " is handled by E201.
+        # r"'"
+        # r'|'
+        # r'"'
+        # r'|'
+
         # ‘’
         r'\u2018|\u2019'
         r'|'
         # “”
         r'\u201c|\u201d'
+
         r')'
     )
     return detect_by_patterns(
@@ -409,7 +414,7 @@ class SpecialWordHelper(object):
 
     @classmethod
     def delimiter_in_word(cls, content, match):
-        delimiter = match.group(0)
+        delimiter = match.group(1)
         if delimiter not in cls.SENTENCE_DELIMITER_TO_WORD:
             return False
 
@@ -500,11 +505,13 @@ def split_text_element(element):
 
     # split sentences.
     SENTENCE_DELIMITERS = (
+        r'('
         r'\.{6}'
         r'|'
         r'!|;|\.|\?'
         r'|'
         r'\uff01|\uff1b|\u3002|\uff1f'
+        r')'
     )
 
     OPEN_PARENTHESIS = set(

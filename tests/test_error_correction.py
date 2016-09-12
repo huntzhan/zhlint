@@ -10,12 +10,12 @@ import re
 from zh_doclint.error_correction import (
     ErrorCorrectionHandler,
     DiffOperation,
-    INT_MAX,
 )
 from zh_doclint.error_detection import detect_e101  # noqa
 from zh_doclint.error_detection import detect_e102  # noqa
 from zh_doclint.error_detection import detect_e103  # noqa
 from zh_doclint.error_detection import detect_e104  # noqa
+from zh_doclint.error_detection import detect_e201  # noqa
 
 from zh_doclint.utils import TextElement
 
@@ -89,7 +89,7 @@ def test_coordinate_query():
 
 
 def simple_init(error_code, text):
-    te = TextElement('', 1, 1, text)
+    te = TextElement('', 1, 1, text, offset=0)
     h = ErrorCorrectionHandler(
         text,
         (te, 'EOF'),
@@ -186,16 +186,13 @@ def test_correct_e103():
 def test_correct_e104():
     h = simple_init('E104', '(42）')
     assert [
-        DiffOperation.delete(1, 4),
-        DiffOperation.insert(INT_MAX, INT_MAX, val=')'),
+        DiffOperation.replace(1, 4, val=')'),
     ] == h.diffs
 
     h = simple_init('E104', '（42）')
     assert [
-        DiffOperation.delete(1, 1),
-        DiffOperation.insert(1, 2, val='('),
-        DiffOperation.delete(1, 4),
-        DiffOperation.insert(INT_MAX, INT_MAX, val=')'),
+        DiffOperation.replace(1, 1, val='('),
+        DiffOperation.replace(1, 4, val=')'),
     ] == h.diffs
 
     h = simple_init('E104', '42(42)')
@@ -214,4 +211,31 @@ def test_correct_e104():
     assert [
         DiffOperation.delete(1, 1),
         DiffOperation.delete(1, 2),
+    ] == h.diffs
+
+
+def test_correct_e201():
+    h = simple_init('E201', '有中文,错误.')
+    assert [
+        DiffOperation.replace(1, 4, val='，'),
+        DiffOperation.replace(1, 7, val='。'),
+    ] == h.diffs
+
+    h = simple_init('E201', '有中文, 错误.')
+    assert [
+        DiffOperation.replace(1, 4, val='，'),
+        DiffOperation.delete(1, 5),
+        DiffOperation.replace(1, 8, val='。'),
+    ] == h.diffs
+
+    h = simple_init('E201', '有中文"错误"')
+    assert [
+        DiffOperation.replace(1, 4, val='「'),
+        DiffOperation.replace(1, 7, val='」'),
+    ] == h.diffs
+
+    h = simple_init('E201', '有中文(错误)')
+    assert [
+        DiffOperation.replace(1, 4, val='（'),
+        DiffOperation.replace(1, 7, val='）'),
     ] == h.diffs

@@ -67,6 +67,10 @@ def insert_before(coordinate, diffs, val):
     add_diff_operations('insert', [coordinate], diffs, val=val)
 
 
+def replace_with(coordinate, diffs, val):
+    add_diff_operations('replace', [coordinate], diffs, val=val)
+
+
 def correct_single_space_problem(element, match, handler):
 
     coordinates = handler.coordinate_query.query_match(
@@ -100,7 +104,6 @@ def correct_e104(element, match, handler):
     match, tag = match
     coordinates = handler.coordinate_query.query_match(
         match, base_loc=element.loc_begin,
-        add_right_boundary=True,
     )
     whitespaces, lparenthesis, digits, rparenthesis = match.groups()
 
@@ -111,15 +114,65 @@ def correct_e104(element, match, handler):
             insert_before(coordinates[1][0], handler.diffs, val=' ')
 
     if lparenthesis != '(':
-        delete_group(coordinates[1], handler.diffs)
-        insert_before(coordinates[2][0], handler.diffs, val='(')
+        replace_with(coordinates[1][0], handler.diffs, val='(')
     if rparenthesis != ')':
-        delete_group(coordinates[3], handler.diffs)
-        insert_before(coordinates[4][0], handler.diffs, val=')')
+        replace_with(coordinates[3][0], handler.diffs, val=')')
 
 
 def correct_e201(element, match, handler):
-    pass
+
+    def guess_open_or_close(text, punctuation):
+        return sum(map(lambda c: 1 if c == punctuation else 0, text)) % 2 == 0
+
+    # punctuations: en to zh.
+    EN2ZH = {
+        # positive.
+        '!': '！',
+        '$': '＄',
+        '(': '（',
+        ')': '）',
+        ',': '，',
+        '.': '。',
+        ':': '：',
+        ';': '；',
+        '<': '《',
+        '>': '》',
+        '?': '？',
+        '\\': '、',
+        '/': '、',
+        '_': '＿',
+
+        # best effort.
+        '[': '「',
+        ']': '」',
+        '{': '『',
+        '}': '』',
+
+        # not sure.
+        # https://en.wikipedia.org/wiki/Caret
+        '^': '\u2038',
+    }
+
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+        offset=element.offset,
+    )
+    punctuation, whitespaces = match.groups()
+
+    if punctuation in EN2ZH:
+        replace_with(coordinates[0][0], handler.diffs, val=EN2ZH[punctuation])
+    else:
+        # ' and "
+        if guess_open_or_close(element.content[:match.start()], punctuation):
+            val = '「'
+        else:
+            val = '」'
+        replace_with(
+            coordinates[0][0], handler.diffs, val=val,
+        )
+
+    if whitespaces:
+        delete_group(coordinates[1], handler.diffs)
 
 
 def correct_e202(element, match, handler):
