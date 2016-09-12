@@ -265,7 +265,14 @@ def correct_e205(element, match, handler):
 
 
 def correct_e206(element, match, handler):
-    pass
+
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+        add_right_boundary=True,
+    )
+    mark = match.group(1)[0]
+    delete_group(coordinates[0], handler.diffs)
+    insert_before(coordinates[1][0], handler.diffs, val=mark)
 
 
 def correct_e207(element, match, handler):

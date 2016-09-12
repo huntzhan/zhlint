@@ -21,6 +21,7 @@ from zh_doclint.error_detection import detect_e202  # noqa
 from zh_doclint.error_detection import detect_e203  # noqa
 from zh_doclint.error_detection import detect_e204  # noqa
 from zh_doclint.error_detection import detect_e205  # noqa
+from zh_doclint.error_detection import detect_e206  # noqa
 
 from zh_doclint.utils import TextElement
 
@@ -307,4 +308,22 @@ def test_correct_e205():
         DiffOperation.delete(1, 3),
         DiffOperation.delete(1, 4),
         DiffOperation.insert(INT_MAX, INT_MAX, '......'),
+    ] == h.diffs
+
+
+def test_correct_e206():
+    h = simple_init('E206', 'this is sparta!!!')
+    assert [
+        DiffOperation.delete(1, 15),
+        DiffOperation.delete(1, 16),
+        DiffOperation.delete(1, 17),
+        DiffOperation.insert(INT_MAX, INT_MAX, '!'),
+    ] == h.diffs
+
+    h = simple_init('E206', 'this is sparta???')
+    assert [
+        DiffOperation.delete(1, 15),
+        DiffOperation.delete(1, 16),
+        DiffOperation.delete(1, 17),
+        DiffOperation.insert(INT_MAX, INT_MAX, '?'),
     ] == h.diffs
