@@ -17,6 +17,7 @@ from zh_doclint.error_detection import detect_e103  # noqa
 from zh_doclint.error_detection import detect_e104  # noqa
 from zh_doclint.error_detection import detect_e201  # noqa
 from zh_doclint.error_detection import detect_e202  # noqa
+from zh_doclint.error_detection import detect_e203  # noqa
 
 from zh_doclint.utils import TextElement
 
@@ -247,4 +248,16 @@ def test_correct_e202():
     assert [
         DiffOperation.replace(1, 8, val=', '),
         DiffOperation.replace(1, 13, val='. '),
+    ] == h.diffs
+
+
+def test_correct_e203():
+    h = simple_init('E203', '中文， 测试')
+    assert [
+        DiffOperation.delete(1, 4),
+    ] == h.diffs
+
+    h = simple_init('E203', '中文 ，测试')
+    assert [
+        DiffOperation.delete(1, 3),
     ] == h.diffs

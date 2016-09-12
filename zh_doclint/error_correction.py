@@ -76,7 +76,6 @@ def correct_single_space_problem(element, match, handler):
     coordinates = handler.coordinate_query.query_match(
         match, base_loc=element.loc_begin,
     )
-    print(match.groups())
     a, whitespaces, b = match.groups()
 
     if whitespaces:
@@ -229,7 +228,13 @@ def correct_e202(element, match, handler):
 
 
 def correct_e203(element, match, handler):
-    pass
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+    )
+    a, whitespaces, b = match.groups()
+
+    if whitespaces:
+        delete_group(coordinates[1], handler.diffs)
 
 
 def correct_e204(element, match, handler):
