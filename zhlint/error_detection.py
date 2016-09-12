@@ -251,6 +251,22 @@ def contains_chinese_characters(content):
     return re.search(ZH_CHARACTERS, content, re.UNICODE)
 
 
+def delimiter_in_email(content, m):
+    OFFSET = 20
+    i = m.start()
+    lb = max(0, i - OFFSET)
+    ub = i + OFFSET + 1
+
+    segment = content[lb:ub]
+    i = min(i, OFFSET)
+
+    EMAIL = r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"
+    for email_m in re.finditer(EMAIL, segment):
+        if email_m.start() <= i < email_m.end():
+            return True
+    return False
+
+
 # 1: en punctuations.
 # 2: whitespaces.
 def detect_e201(element):
@@ -311,6 +327,8 @@ def detect_e201(element):
             ignore_matches=set(['......']),
         ):
             if SpecialWordHelper.delimiter_in_word(element.content, m):
+                continue
+            if delimiter_in_email(element.content, m):
                 continue
 
             contains_mark = False
@@ -542,6 +560,8 @@ def split_text_element(element):
         for m in re.finditer(SENTENCE_DELIMITERS, content, flags=re.UNICODE):
             # ignore delimiter within special words.
             if SpecialWordHelper.delimiter_in_word(content, m):
+                continue
+            if delimiter_in_email(content, m):
                 continue
 
             send = m.end()

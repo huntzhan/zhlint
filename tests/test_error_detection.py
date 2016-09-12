@@ -305,6 +305,7 @@ def test_e201():
             'P.S. 这是一行中文。',
             'LaTeX 公式 $$',
             'LaTeX 公式 \(\)',
+            '邮箱：programmer.zhx@gmail.com',
         ],
         detect_e201,
         should_detected=False,
@@ -397,6 +398,11 @@ i？'''
     assert len(lines) == 9
 
     content = '''P.S. this is a line!'''
+
+    lines, begins, ends, offsets = help_(content, '1', '9')
+    assert len(lines) == 1
+
+    content = '''邮箱：abc.de@fgh.com！'''
 
     lines, begins, ends, offsets = help_(content, '1', '9')
     assert len(lines) == 1
