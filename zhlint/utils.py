@@ -16,6 +16,12 @@ def load_file(fpath):
         return fin.read()
 
 
+def write_file(fpath, content):
+    fpath = expanduser(fpath)
+    with open(fpath, encoding='utf-8', mode='w') as fout:
+        fout.write(content)
+
+
 def try_invoke(inst, method_name):
     method = getattr(inst, method_name, None)
     if callable(method):
