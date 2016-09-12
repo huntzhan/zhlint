@@ -11,7 +11,11 @@ from zh_doclint.error_detection import (
     process_errors,
 )
 from zh_doclint.preprocessor import transform
-from zh_doclint.error_correction import ErrorCorrectionHandler, DiffOperation
+from zh_doclint.error_correction import (
+    ErrorCorrectionHandler,
+    DiffOperation,
+    DiffOperationExecutor,
+)
 
 
 DATA = os.path.join(
@@ -29,14 +33,16 @@ def load_and_check(name):
     elements = transform(content)
     h = ErrorCorrectionHandler(content, elements)
     process_errors(h, elements[0])
-    h.postprocess_diffs()
-    return h.diffs
+    executor = DiffOperationExecutor(h.diffs, h.raw_lines)
+    return executor
 
 
 def test_simple():
-    diffs = load_and_check('correction_simple.md')
+    executor = load_and_check('correction_simple.md')
     assert [
         DiffOperation.replace(1, 3, val='，'),
         DiffOperation.delete(1, 4),
         DiffOperation.replace(1, 7, val='。'),
-    ] == diffs
+    ] == executor.diffs
+
+    assert '中文，标点。\n' == executor.apply_diff_operations()

@@ -16,32 +16,33 @@ def lcs_marks(x, y):
     ny = len(y)
 
     # one-based.
+    # nx * ny matrix.
     dp = [[None] * (ny + 1) for _ in range(nx + 1)]
 
-    TO_LEFT = 1
+    TO_TOP = 1
     TO_TOP_LEFT = 2
 
-    for i in range(nx + 1):
-        for j in range(min(i + 1, ny + 1)):
-            if i == 0 or j == 0:
-                dp[i][j] = None
+    for xi in range(nx + 1):
+        for yi in range(min(xi + 1, ny + 1)):
+            if xi == 0 or yi == 0:
+                dp[xi][yi] = None
                 continue
-            if x[i - 1] == y[j - 1]:
-                dp[i][j] = TO_TOP_LEFT
+            if x[xi - 1] == y[yi - 1]:
+                dp[xi][yi] = TO_TOP_LEFT
             else:
-                dp[i][j] = TO_LEFT
+                dp[xi][yi] = TO_TOP
 
     marks = [False] * nx
-    i = nx
-    j = ny
-    while i > 0:
-        while dp[i][j] == TO_LEFT:
-            i -= 1
-        if dp[i][j] is None:
+    xi = nx
+    yi = ny
+    while yi > 0 and xi > 0:
+        while dp[xi][yi] == TO_TOP:
+            xi -= 1
+        if dp[xi][yi] is None:
             raise RuntimeError
         # find TO_TOP_LEFT.
-        marks[i - 1] = True
-        i -= 1
-        j -= 1
+        marks[xi - 1] = True
+        xi -= 1
+        yi -= 1
 
     return marks

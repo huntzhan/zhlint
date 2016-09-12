@@ -401,6 +401,105 @@ class CoordinateQuery(object):
         return coordinates
 
 
+class DiffOperationExecutor(object):
+
+    def __init__(self, diffs, raw_lines):
+        self.diffs = self.postprocess_diffs(diffs[:])
+        self.raw_lines = self.postprocess_raw_lines(raw_lines)
+
+    def postprocess_raw_lines(self, raw_lines):
+        # convert to 1-based.
+        return [list(chain([None], line or [])) for line in raw_lines]
+
+    def postprocess_diffs(self, diffs):
+        # 1. sort and merge.
+        diffs = sorted(diffs)
+        merged_diffs = []
+        i = 0
+        n = len(diffs)
+        while i < n:
+            j = i + 1
+            while j < n and diffs[i] == diffs[j]:
+                j += 1
+            merged_diffs.append(diffs[i])
+            i = j
+        diffs = merged_diffs
+
+        # 2. check conflict.
+        i = 0
+        n = len(diffs)
+        while i < n:
+            op_i = diffs[i]
+            j = i + 1
+            while j < n:
+                op_j = diffs[j]
+                if op_i.row == op_j.row and op_i.col == op_j.col:
+                    j += 1
+                else:
+                    break
+
+            op_group = diffs[i:j]
+            op_tags = [op.tag for op in op_group]
+
+            if len(op_group) >= 2:
+                if (
+                    len(op_group) > 2 or
+                    op_tags[0] != DiffOperation.INSERT or
+                    op_tags[1] == DiffOperation.INSERT
+                ):
+                    raise RuntimeError('Detect Conflicts!')
+
+            # move to next.
+            i = j
+
+        return diffs
+
+    def _check_axis(self, row, col, di, diffs):
+        if di == len(diffs):
+            return True
+        else:
+            op = diffs[di]
+            return (row, col) < (op.row, op.col)
+
+    def _apply_diff_operation(self, col, op, content):
+        if op.tag == DiffOperation.INSERT:
+            content.append(op.val)
+        elif op.tag == DiffOperation.DELETE:
+            col += 1
+        elif op.tag == DiffOperation.REPLACE:
+            content.append(op.val)
+            col += 1
+        return col
+
+    def apply_diff_operations(self):
+        m = len(self.raw_lines) - 1
+        di = 0
+        content = []
+
+        for row in range(1, m + 1):
+            n = len(self.raw_lines[row]) - 1
+            col = 1
+            while col <= n:
+                if self._check_axis(row, col, di, self.diffs):
+                    # normal case.
+                    content.append(self.raw_lines[row][col])
+                    col += 1
+                else:
+                    # make changes.
+                    col = self._apply_diff_operation(
+                        col,
+                        self.diffs[di],
+                        content,
+                    )
+                    di += 1
+
+        # EOF.
+        if di == len(self.diffs) - 1:
+            content.append(self.diffs[di].val)
+
+        return ''.join(content)
+
+
 class ErrorCorrectionHandler(object):
 
     # build block-level LCS.
@@ -483,48 +582,6 @@ class ErrorCorrectionHandler(object):
                 rawcol += 1
 
             self.index_matrix[row] = index_mapping
-
-    def postprocess_diffs(self):
-        # 1. sort and merge.
-        self.diffs = sorted(self.diffs)
-        merged_diffs = []
-        i = 0
-        n = len(self.diffs)
-        while i < n:
-            j = i + 1
-            while j < n and self.diffs[i] == self.diffs[j]:
-                j += 1
-            merged_diffs.append(self.diffs[i])
-            i = j
-        self.diffs = merged_diffs
-
-        # 2. check conflict.
-        i = 0
-        n = len(self.diffs)
-        while i < n:
-            op_i = self.diffs[i]
-            j = i + 1
-            while j < n:
-                op_j = self.diffs[j]
-                if op_i.row == op_j.row and op_i.col == op_j.col:
-                    j += 1
-                else:
-                    break
-
-            op_group = self.diffs[i:j]
-            op_tags = [op.tag for op in op_group]
-
-            # move to next.
-            i = j
-
-            if len(op_group) == 1:
-                continue
-            if (
-                len(op_group) > 2 or
-                op_tags[0] != DiffOperation.INSERT or
-                op_tags[1] == DiffOperation.INSERT
-            ):
-                raise RuntimeError('Detect Conflicts!')
 
     def __call__(self, error_code, element, matches):
         if not matches:

@@ -583,6 +583,7 @@ def split_text_element(element):
                     'paragraph',
                     loc_begin, loc_begin,
                     content[sbegin:],
+                    offset=count_offset(content[:sbegin]),
                 )
             )
     return sentences

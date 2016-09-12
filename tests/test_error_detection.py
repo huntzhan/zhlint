@@ -410,3 +410,12 @@ sentence 2.'''
     assert [1, 2] == begins
     assert [1, 3] == ends
     assert [0, 0] == offsets
+
+    content = '''sentence 1.
+sentence 2.  sentence 3'''
+    lines, begins, ends, offsets = help_(content, '1', '2')
+
+    assert ['sentence 1.\n', 'sentence 2.', '  sentence 3'] == lines
+    assert [1, 2, 2] == begins
+    assert [1, 2, 2] == ends
+    assert [0, 0, 11] == offsets
