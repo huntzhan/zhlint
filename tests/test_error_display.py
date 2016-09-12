@@ -5,11 +5,11 @@ from __future__ import (
 from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
-from zh_doclint.utils import TextElement
-from zh_doclint.error_detection import (
+from zhlint.utils import TextElement
+from zhlint.error_detection import (
     process_errors,
 )
-from zh_doclint.error_display import ErrorDisplayHandler
+from zhlint.error_display import ErrorDisplayHandler
 
 
 def test_process_errors():

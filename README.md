@@ -1,4 +1,4 @@
-# zh-doclint
+# zhlint
 
 Note: This project is highly related to Chinese, so the document is writtern in Chinese.
 
@@ -9,14 +9,14 @@ Note: This project is highly related to Chinese, so the document is writtern in 
 ## 安装
 
 ```
-pip install zh-doclint
+pip install zhlint
 ```
 
 ## 使用
 
 ```shell
-$ zh-doclint --help
-Usage: zh-doclint [OPTIONS] FPATH
+$ zhlint --help
+Usage: zhlint [OPTIONS] FPATH
 
 Options:
   --version  Show the version and exit.
@@ -26,7 +26,7 @@ $ ccat doc.md
 我跟你讲，这里有问题. 这个
  case一看就是“药丸”
 
-$ zh-doclint doc.md 
+$ zhlint doc.md 
 ==========================================
 E101: 英文与非标点的中文之间需要有一个空格
 ==========================================

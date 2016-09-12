@@ -7,7 +7,7 @@
 
 
 from mistune import Renderer, BlockLexer
-from zh_doclint.utils import count_newlines
+from zhlint.utils import count_newlines
 
 
 def fmt(text):

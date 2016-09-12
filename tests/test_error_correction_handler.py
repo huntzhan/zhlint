@@ -7,11 +7,11 @@ from future.builtins.disabled import *  # noqa
 
 import os.path
 
-from zh_doclint.error_detection import (
+from zhlint.error_detection import (
     process_errors,
 )
-from zh_doclint.preprocessor import transform
-from zh_doclint.error_correction import (
+from zhlint.preprocessor import transform
+from zhlint.error_correction import (
     ErrorCorrectionHandler,
     DiffOperation,
     DiffOperationExecutor,

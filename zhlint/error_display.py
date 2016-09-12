@@ -11,7 +11,7 @@ import collections as abc
 
 import click
 
-from zh_doclint.utils import count_newlines
+from zhlint.utils import count_newlines
 
 
 ERROR_DISPLAY = {

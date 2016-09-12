@@ -7,8 +7,8 @@ from future.builtins.disabled import *  # noqa
 
 from operator import attrgetter
 
-from zh_doclint.utils import TextElement
-from zh_doclint.error_detection import (
+from zhlint.utils import TextElement
+from zhlint.error_detection import (
     detect_e101,
     detect_e102,
     detect_e103,

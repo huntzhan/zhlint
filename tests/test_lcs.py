@@ -5,7 +5,7 @@ from __future__ import (
 from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
-from zh_doclint.lcs import lcs_marks
+from zhlint.lcs import lcs_marks
 
 
 def test_simple():

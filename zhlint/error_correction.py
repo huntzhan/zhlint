@@ -8,8 +8,8 @@ from future.builtins.disabled import *  # noqa
 from itertools import chain
 import functools
 
-from zh_doclint.lcs import lcs_marks
-from zh_doclint.utils import text2lines, safelen
+from zhlint.lcs import lcs_marks
+from zhlint.utils import text2lines, safelen
 
 
 INT_MAX = 1 << 31 - 1

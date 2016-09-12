@@ -7,7 +7,7 @@ from future.builtins.disabled import *  # noqa
 
 import os.path
 
-from zh_doclint.preprocessor import transform
+from zhlint.preprocessor import transform
 
 
 DATA = os.path.join(

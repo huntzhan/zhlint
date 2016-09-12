@@ -8,10 +8,10 @@ from future.builtins.disabled import *  # noqa
 import re
 
 from mistune import Markdown
-from zh_doclint.mistune_patch import (
+from zhlint.mistune_patch import (
     HackedRenderer, HackedBlockLexer, count_newlines,
 )
-from zh_doclint.utils import TextElement
+from zhlint.utils import TextElement
 
 
 def remove_block(pattern, text):

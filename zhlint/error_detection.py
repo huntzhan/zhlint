@@ -10,7 +10,7 @@ from operator import methodcaller
 from collections import defaultdict
 import itertools
 
-from zh_doclint.utils import (
+from zhlint.utils import (
     TextElement,
     count_newlines,
     count_offset,

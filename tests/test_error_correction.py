@@ -7,25 +7,25 @@ from future.builtins.disabled import *  # noqa
 
 import re
 
-from zh_doclint.error_correction import (
+from zhlint.error_correction import (
     ErrorCorrectionHandler,
     DiffOperation,
     INT_MAX,
 )
-from zh_doclint.error_detection import detect_e101  # noqa
-from zh_doclint.error_detection import detect_e102  # noqa
-from zh_doclint.error_detection import detect_e103  # noqa
-from zh_doclint.error_detection import detect_e104  # noqa
-from zh_doclint.error_detection import detect_e201  # noqa
-from zh_doclint.error_detection import detect_e202  # noqa
-from zh_doclint.error_detection import detect_e203  # noqa
-from zh_doclint.error_detection import detect_e204  # noqa
-from zh_doclint.error_detection import detect_e205  # noqa
-from zh_doclint.error_detection import detect_e206  # noqa
-from zh_doclint.error_detection import detect_e207  # noqa
-from zh_doclint.error_detection import detect_e301  # noqa
+from zhlint.error_detection import detect_e101  # noqa
+from zhlint.error_detection import detect_e102  # noqa
+from zhlint.error_detection import detect_e103  # noqa
+from zhlint.error_detection import detect_e104  # noqa
+from zhlint.error_detection import detect_e201  # noqa
+from zhlint.error_detection import detect_e202  # noqa
+from zhlint.error_detection import detect_e203  # noqa
+from zhlint.error_detection import detect_e204  # noqa
+from zhlint.error_detection import detect_e205  # noqa
+from zhlint.error_detection import detect_e206  # noqa
+from zhlint.error_detection import detect_e207  # noqa
+from zhlint.error_detection import detect_e301  # noqa
 
-from zh_doclint.utils import TextElement
+from zhlint.utils import TextElement
 
 
 SIMPLE_CONTENT = (

@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 # load metadata.
 metadata = imp.load_source(
     'metadata',
-    os.path.join('zh_doclint', 'metadata.py'),
+    os.path.join('zhlint', 'metadata.py'),
 )
 
 
@@ -59,7 +59,7 @@ setup(
     install_requires=load_requirements('requirements.txt'),
     entry_points={
         'console_scripts': [
-            'zh-doclint = zh_doclint.main:entry_point'
+            'zhlint = zhlint.main:entry_point'
         ],
     },
 )

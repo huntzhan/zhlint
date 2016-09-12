@@ -4,7 +4,7 @@ from __future__ import (
 )
 
 
-NAME = 'zh_doclint'
+NAME = 'zhlint'
 VERSION = '0.1.2'
 AUTHORS = [
     'huntzhan',

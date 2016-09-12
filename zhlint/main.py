@@ -8,13 +8,13 @@ from future.builtins.disabled import *  # noqa
 import click
 from mistune import preprocessing
 
-from zh_doclint.metadata import VERSION
-from zh_doclint.utils import load_file
-from zh_doclint.preprocessor import transform
+from zhlint.metadata import VERSION
+from zhlint.utils import load_file
+from zhlint.preprocessor import transform
 
-from zh_doclint.error_detection import process_errors
-from zh_doclint.error_display import ErrorDisplayHandler
-from zh_doclint.error_correction import (
+from zhlint.error_detection import process_errors
+from zhlint.error_display import ErrorDisplayHandler
+from zhlint.error_correction import (
     ErrorCorrectionHandler,
     DiffOperationExecutor,
 )
