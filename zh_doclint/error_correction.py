@@ -119,12 +119,8 @@ def correct_e104(element, match, handler):
         replace_with(coordinates[3][0], handler.diffs, val=')')
 
 
-def correct_e201(element, match, handler):
+class PunctuationConverter(object):
 
-    def guess_open_or_close(text, punctuation):
-        return sum(map(lambda c: 1 if c == punctuation else 0, text)) % 2 == 0
-
-    # punctuations: en to zh.
     EN2ZH = {
         # positive.
         '!': '！',
@@ -153,14 +149,55 @@ def correct_e201(element, match, handler):
         '^': '\u2038',
     }
 
+    ZH2EN = {
+        # positive.
+        '！': '!',
+        '＄': '$',
+        '（': '(',
+        '）': ')',
+        '，': ',',
+        '。': '.',
+        '：': ':',
+        '；': ';',
+        '《': '<',
+        '》': '>',
+        '？': '?',
+        '、': ',',
+        '＿': '_',
+
+        '‘': "'",
+        '’': "'",
+        '“': '"',
+        '”': '"',
+
+        # best effort.
+        '「': '"',
+        '」': '"',
+        '『': '"',
+        '』': '"',
+
+        # not sure.
+        # https://en.wikipedia.org/wiki/Caret
+        '\u2038': '^',
+    }
+
+
+def correct_e201(element, match, handler):
+
+    def guess_open_or_close(text, punctuation):
+        return sum(map(lambda c: 1 if c == punctuation else 0, text)) % 2 == 0
+
     coordinates = handler.coordinate_query.query_match(
         match, base_loc=element.loc_begin,
         offset=element.offset,
     )
     punctuation, whitespaces = match.groups()
 
-    if punctuation in EN2ZH:
-        replace_with(coordinates[0][0], handler.diffs, val=EN2ZH[punctuation])
+    if punctuation in PunctuationConverter.EN2ZH:
+        replace_with(
+            coordinates[0][0], handler.diffs,
+            val=PunctuationConverter.EN2ZH[punctuation],
+        )
     else:
         # ' and "
         if guess_open_or_close(element.content[:match.start()], punctuation):
@@ -176,7 +213,19 @@ def correct_e201(element, match, handler):
 
 
 def correct_e202(element, match, handler):
-    pass
+
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+        offset=element.offset,
+    )
+    punctuation = match.group(1)
+
+    if punctuation in PunctuationConverter.ZH2EN:
+        replace_with(
+            coordinates[0][0], handler.diffs,
+            # because of E203, a space should be added to en punctuation.
+            val=PunctuationConverter.ZH2EN[punctuation] + ' ',
+        )
 
 
 def correct_e203(element, match, handler):
