@@ -267,6 +267,15 @@ def delimiter_in_email(content, m):
     return False
 
 
+# simple url and filename.
+def delimiter_in_simple_uri(content, m):
+    i = m.start()
+    if i == 0 or i == len(content) - 1 or content[i] != '.':
+        return False
+    else:
+        return content[i - 1].isalnum() and content[i + 1].isalnum()
+
+
 # 1: en punctuations.
 # 2: whitespaces.
 def detect_e201(element):
@@ -329,6 +338,8 @@ def detect_e201(element):
             if SpecialWordHelper.delimiter_in_word(element.content, m):
                 continue
             if delimiter_in_email(element.content, m):
+                continue
+            if delimiter_in_simple_uri(element.content, m):
                 continue
 
             contains_mark = False
@@ -562,6 +573,8 @@ def split_text_element(element):
             if SpecialWordHelper.delimiter_in_word(content, m):
                 continue
             if delimiter_in_email(content, m):
+                continue
+            if delimiter_in_simple_uri(element.content, m):
                 continue
 
             send = m.end()
