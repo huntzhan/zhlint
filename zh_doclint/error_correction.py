@@ -54,8 +54,6 @@ class DiffOperation(object):
 def add_diff_operations(attr, coordinates, diffs, val=None):
     func = getattr(DiffOperation, attr)
     ops = [func(x, y, val=val) for x, y in coordinates]
-    for i in range(1, len(ops)):
-        ops[i].parent = ops[i - 1]
     diffs.extend(ops)
 
 
@@ -257,7 +255,13 @@ def correct_e204(element, match, handler):
 
 
 def correct_e205(element, match, handler):
-    pass
+
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+        add_right_boundary=True,
+    )
+    delete_group(coordinates[0], handler.diffs)
+    insert_before(coordinates[1][0], handler.diffs, val='......')
 
 
 def correct_e206(element, match, handler):

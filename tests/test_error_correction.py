@@ -10,6 +10,7 @@ import re
 from zh_doclint.error_correction import (
     ErrorCorrectionHandler,
     DiffOperation,
+    INT_MAX,
 )
 from zh_doclint.error_detection import detect_e101  # noqa
 from zh_doclint.error_detection import detect_e102  # noqa
@@ -19,6 +20,7 @@ from zh_doclint.error_detection import detect_e201  # noqa
 from zh_doclint.error_detection import detect_e202  # noqa
 from zh_doclint.error_detection import detect_e203  # noqa
 from zh_doclint.error_detection import detect_e204  # noqa
+from zh_doclint.error_detection import detect_e205  # noqa
 
 from zh_doclint.utils import TextElement
 
@@ -275,4 +277,34 @@ def test_correct_e204():
     assert [
         DiffOperation.replace(1, 3, '「'),
         DiffOperation.replace(1, 6, '」'),
+    ] == h.diffs
+
+
+def test_correct_e205():
+
+    h = simple_init('E205', '中文...')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.delete(1, 5),
+        DiffOperation.insert(INT_MAX, INT_MAX, '......'),
+    ] == h.diffs
+
+    h = simple_init('E205', '中文.......')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.delete(1, 5),
+        DiffOperation.delete(1, 6),
+        DiffOperation.delete(1, 7),
+        DiffOperation.delete(1, 8),
+        DiffOperation.delete(1, 9),
+        DiffOperation.insert(INT_MAX, INT_MAX, '......'),
+    ] == h.diffs
+
+    h = simple_init('E205', '中文。。')
+    assert [
+        DiffOperation.delete(1, 3),
+        DiffOperation.delete(1, 4),
+        DiffOperation.insert(INT_MAX, INT_MAX, '......'),
     ] == h.diffs
