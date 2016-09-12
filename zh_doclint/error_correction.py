@@ -284,7 +284,14 @@ def correct_e207(element, match, handler):
 
 
 def correct_e301(element, match, handler):
-    pass
+    match, correct_form = match
+
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+        add_right_boundary=True,
+    )
+    delete_group(coordinates[0], handler.diffs)
+    insert_before(coordinates[1][0], handler.diffs, val=correct_form)
 
 
 class CoordinateQuery(object):

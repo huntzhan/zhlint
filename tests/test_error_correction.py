@@ -23,6 +23,7 @@ from zh_doclint.error_detection import detect_e204  # noqa
 from zh_doclint.error_detection import detect_e205  # noqa
 from zh_doclint.error_detection import detect_e206  # noqa
 from zh_doclint.error_detection import detect_e207  # noqa
+from zh_doclint.error_detection import detect_e301  # noqa
 
 from zh_doclint.utils import TextElement
 
@@ -342,4 +343,14 @@ def test_correct_e207():
         DiffOperation.delete(1, 5),
         DiffOperation.delete(1, 6),
         DiffOperation.delete(1, 7),
+    ] == h.diffs
+
+
+def test_correct_e301():
+    h = simple_init('E301', 'APP')
+    assert [
+        DiffOperation.delete(1, 1),
+        DiffOperation.delete(1, 2),
+        DiffOperation.delete(1, 3),
+        DiffOperation.insert(INT_MAX, INT_MAX, val='App'),
     ] == h.diffs

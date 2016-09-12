@@ -433,17 +433,15 @@ def detect_e301(element):
 
     for correct_form, pattern in SpecialWordHelper.WORD_PATTERN.items():
 
-        p1 = r'(?<![a-zA-Z])({0})(?![a-zA-Z])'.format(pattern)
-        p2 = r'^()({0})(?![a-zA-Z])'.format(pattern)
-        p3 = r'(?<![a-zA-Z])({0})()$'.format(pattern)
+        # (?<!xxx) and (?!xxx) could match ^ and $.
+        p = r'(?<![a-zA-Z])({0})(?![a-zA-Z])'.format(pattern)
 
-        for p in [p1, p2, p3]:
-            for m in re.finditer(
-                p, element.content,
-                flags=re.UNICODE | re.IGNORECASE,
-            ):
-                if m.group(0) != correct_form:
-                    yield m
+        for m in re.finditer(
+            p, element.content,
+            flags=re.UNICODE | re.IGNORECASE,
+        ):
+            if m.group(0) != correct_form:
+                yield m, correct_form
 
 
 def process_errors_by_handler(error_codes, error_handler, element):
