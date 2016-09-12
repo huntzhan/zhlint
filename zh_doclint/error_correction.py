@@ -238,7 +238,22 @@ def correct_e203(element, match, handler):
 
 
 def correct_e204(element, match, handler):
-    pass
+
+    ZH_QUOTE_MAPPING = {
+        '\u2018': '「',
+        '\u201c': '「',
+        '\u2019': '」',
+        '\u201d': '」',
+    }
+
+    coordinates = handler.coordinate_query.query_match(
+        match, base_loc=element.loc_begin,
+    )
+    quote = match.group(1)
+    replace_with(
+        coordinates[0][0], handler.diffs,
+        ZH_QUOTE_MAPPING[quote],
+    )
 
 
 def correct_e205(element, match, handler):
