@@ -6,6 +6,7 @@ from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
 from itertools import chain
+import functools
 
 from zh_doclint.lcs import lcs_marks
 from zh_doclint.utils import text2lines, safelen
@@ -14,6 +15,7 @@ from zh_doclint.utils import text2lines, safelen
 INT_MAX = 1 << 31 - 1
 
 
+@functools.total_ordering
 class DiffOperation(object):
 
     INSERT = 0
@@ -39,10 +41,13 @@ class DiffOperation(object):
         self.val = val
         self.parent = parent
 
-        self._attrs = (self.tag, self.row, self.col, self.val, self.parent)
+        self._attrs = (self.row, self.col, self.tag, self.parent, self.val)
 
     def __eq__(self, other):
         return self._attrs == other._attrs
+
+    def __lt__(self, other):
+        return self._attrs < other._attrs
 
     def __str__(self):
         return '<{0}>'.format(', '.join(map(str, self._attrs)))
@@ -479,7 +484,52 @@ class ErrorCorrectionHandler(object):
 
             self.index_matrix[row] = index_mapping
 
+    def postprocess_diffs(self):
+        # 1. sort and merge.
+        self.diffs = sorted(self.diffs)
+        merged_diffs = []
+        i = 0
+        n = len(self.diffs)
+        while i < n:
+            j = i + 1
+            while j < n and self.diffs[i] == self.diffs[j]:
+                j += 1
+            merged_diffs.append(self.diffs[i])
+            i = j
+        self.diffs = merged_diffs
+
+        # 2. check conflict.
+        i = 0
+        n = len(self.diffs)
+        while i < n:
+            op_i = self.diffs[i]
+            j = i + 1
+            while j < n:
+                op_j = self.diffs[j]
+                if op_i.row == op_j.row and op_i.col == op_j.col:
+                    j += 1
+                else:
+                    break
+
+            op_group = self.diffs[i:j]
+            op_tags = [op.tag for op in op_group]
+
+            # move to next.
+            i = j
+
+            if len(op_group) == 1:
+                continue
+            if (
+                len(op_group) > 2 or
+                op_tags[0] != DiffOperation.INSERT or
+                op_tags[1] == DiffOperation.INSERT
+            ):
+                raise RuntimeError('Detect Conflicts!')
+
     def __call__(self, error_code, element, matches):
+        if not matches:
+            return
+
         corrector = globals()['correct_{0}'.format(error_code.lower())]
         for match in matches:
             corrector(element, match, self)
