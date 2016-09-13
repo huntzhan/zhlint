@@ -113,6 +113,10 @@ class LOCStateManager(object):
     def pop(self):
         self.loc = self.loc_stack.pop()
 
+    @property
+    def level(self):
+        return len(self.loc_stack)
+
 
 class HackedBlockLexer(BlockLexer):
 
@@ -169,7 +173,9 @@ class HackedBlockLexer(BlockLexer):
             key, m = manipulate(text)
             if m is not False:
                 text = text[len(m.group(0)):]
-                inject_loc_and_block_type(key, m)
+
+                if self.loc_manager.level == 1 or key == 'paragraph':
+                    inject_loc_and_block_type(key, m)
 
                 continue
 
