@@ -73,9 +73,11 @@ def test_ref_loc():
 def test_list_block():
     elements = transform(load_test_md('list_block.md'))
 
-    assert 2 == len(elements)
-    assert_loc(2, 4, elements[0])
-    eof(elements[1])
+    assert 3 == len(elements)
+    assert_loc(2, 6, elements[0])
+    assert_loc(8, 8, elements[1])
+
+    eof(elements[2])
 
 
 def test_table():

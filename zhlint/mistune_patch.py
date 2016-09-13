@@ -35,10 +35,10 @@ class HackedRenderer(Renderer):
         return ''
 
     def list(self, body, ordered=True):
-        return body
+        return fmt(body)
 
     def list_item(self, text):
-        return fmt(text)
+        return text + '\n'
 
     def paragraph(self, text):
         return fmt(text)
