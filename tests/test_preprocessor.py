@@ -47,15 +47,24 @@ def test_yaml_header():
     eof(elements[1])
 
 
+def assert_loc(begin, end, element):
+    assert begin == int(element.loc_begin)
+    assert end == int(element.loc_end)
+
+
 def test_loc():
-
-    def assert_loc(begin, end, element):
-        assert begin == int(element.loc_begin)
-        assert end == int(element.loc_end)
-
     elements = transform(load_test_md('loc.md'))
 
     assert_loc(5, 5, elements[0])
     assert_loc(9, 11, elements[1])
     assert_loc(16, 16, elements[2])
     eof(elements[3])
+
+
+def test_ref_loc():
+    elements = transform(load_test_md('ref.md'))
+
+    assert 3 == len(elements)
+    assert_loc(2, 2, elements[0])
+    assert_loc(4, 4, elements[1])
+    eof(elements[2])
