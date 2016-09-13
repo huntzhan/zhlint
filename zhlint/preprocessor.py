@@ -9,7 +9,8 @@ import re
 
 from mistune import Markdown
 from zhlint.mistune_patch import (
-    HackedRenderer, HackedBlockLexer, count_newlines,
+    HackedRenderer, HackedBlockLexer, HackedInlineLexer,
+    count_newlines,
 )
 from zhlint.utils import TextElement
 
@@ -71,7 +72,11 @@ def transform(text):
     # manually add EOF.
     text += '\nEOF\n'
 
-    hacked_md = Markdown(renderer=HackedRenderer(), block=HackedBlockLexer())
+    hacked_md = Markdown(
+        renderer=HackedRenderer(),
+        inline=HackedInlineLexer,
+        block=HackedBlockLexer,
+    )
     text = hacked_md(text)
 
     return generate_text_elements(text)

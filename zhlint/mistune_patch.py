@@ -6,7 +6,7 @@
 # from future.builtins.disabled import *  # noqa
 
 
-from mistune import Renderer, BlockLexer
+from mistune import Renderer, BlockLexer, InlineLexer
 from zhlint.utils import count_newlines
 
 
@@ -187,3 +187,42 @@ class HackedBlockLexer(BlockLexer):
 
         self.loc_manager.pop()
         return self.tokens
+
+
+class HackedInlineLexer(InlineLexer):
+
+    def output(self, text, rules=None):
+        # text = text.rstrip('\n')
+        if not rules:
+            rules = list(self.default_rules)
+
+        if self._in_footnote and 'footnote' in rules:
+            rules.remove('footnote')
+
+        output = self.renderer.placeholder()
+
+        def manipulate(text):
+            for key in rules:
+                pattern = getattr(self.rules, key)
+                m = pattern.match(text)
+                if not m:
+                    continue
+                self.line_match = m
+                out = getattr(self, 'output_%s' % key)(m)
+                if out is not None:
+                    return m, out
+            return False  # pragma: no cover
+
+        self.line_started = False
+        while text:
+            ret = manipulate(text)
+            self.line_started = True
+            if ret is not False:
+                m, out = ret
+                output += out
+                text = text[len(m.group(0)):]
+                continue
+            if text:  # pragma: no cover
+                raise RuntimeError('Infinite loop at: %s' % text)
+
+        return output

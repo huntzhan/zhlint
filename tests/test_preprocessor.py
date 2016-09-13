@@ -84,3 +84,25 @@ def test_table():
     elements = transform(load_test_md('table.md'))
     assert 1 == len(elements)
     eof(elements[0])
+
+
+def test_link():
+    elements = transform(load_test_md('link.md'))
+    assert 3 == len(elements)
+    assert_loc(3, 10, elements[0])
+    assert_loc(12, 12, elements[1])
+    eof(elements[2])
+
+    lines = elements[0].content.split('\n')
+    expected = [
+        '',
+        'this',
+        'is',
+        'a',
+        'long',
+        'link',
+        'a',
+        'this is test',
+        '',
+    ]
+    assert expected == lines
