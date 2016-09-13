@@ -362,7 +362,7 @@ class CoordinateQuery(object):
     def query_match(self, match, offset=0, base_loc=1,
                     add_right_boundary=False):
         match_offset = match.start()
-        group_sizes = [len(g) for g in match.groups()]
+        group_sizes = [len(g) for g in match.groups([])]
         if add_right_boundary:
             group_sizes.append(1)
 

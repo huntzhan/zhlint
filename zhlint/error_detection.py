@@ -288,7 +288,7 @@ def detect_e201(element):
 
         patterns = []
         for text in texts:
-            pattern = r'({0})'.format(re.escape(text))
+            pattern = r'(?:{0})'.format(re.escape(text))
             patterns.append(pattern)
 
         return pattern_template.format(r'|'.join(patterns))
