@@ -23,7 +23,7 @@ class HackedRenderer(Renderer):
         return ''
 
     def block_quote(self, text):
-        return fmt(text)
+        return text
 
     def block_html(self, html):
         return ''
@@ -101,15 +101,27 @@ class HackedRenderer(Renderer):
         return ''
 
 
+class LOCStateManager(object):
+
+    def __init__(self):
+        self.loc = 1
+        self.loc_stack = []
+
+    def push(self):
+        self.loc_stack.append(self.loc)
+
+    def pop(self):
+        self.loc = self.loc_stack.pop()
+
+
 class HackedBlockLexer(BlockLexer):
 
     def __init__(self, *args, **kwargs):
         super(HackedBlockLexer, self).__init__(*args, **kwargs)
-        self.loc = 1
-        self.recursive_level = -1
+        self.loc_manager = LOCStateManager()
 
     def parse(self, text, rules=None):
-        self.recursive_level += 1
+        self.loc_manager.push()
 
         text = text.rstrip('\n')
 
@@ -129,9 +141,9 @@ class HackedBlockLexer(BlockLexer):
         def inject_loc_and_block_type(key, m):
             newlines = count_newlines(m)
 
-            loc_begin = self.loc
-            self.loc += newlines
-            loc_end = self.loc
+            loc_begin = self.loc_manager.loc
+            self.loc_manager.loc += newlines
+            loc_end = self.loc_manager.loc
 
             content = m.group(0)
             i = 0
@@ -157,14 +169,12 @@ class HackedBlockLexer(BlockLexer):
             key, m = manipulate(text)
             if m is not False:
                 text = text[len(m.group(0)):]
-                # only inject for top level block.
-                if self.recursive_level == 0:
-                    inject_loc_and_block_type(key, m)
+                inject_loc_and_block_type(key, m)
 
                 continue
 
             if text:  # pragma: no cover
                 raise RuntimeError('Infinite loop at: %s' % text)
 
-        self.recursive_level -= 1
+        self.loc_manager.pop()
         return self.tokens
