@@ -44,16 +44,19 @@ class HackedRenderer(Renderer):
         return fmt(text)
 
     def table(self, header, body):
-        return (
-            '%s'
-            '%s'
-        ) % (header, body)
+        # return (
+        #     '%s'
+        #     '%s'
+        # ) % (header, body)
+        return ''
 
     def table_row(self, content):
-        return content
+        # return content
+        return ''
 
     def table_cell(self, content, **flags):
-        return fmt(content)
+        # return fmt(content)
+        return ''
 
     def double_emphasis(self, text):
         return text

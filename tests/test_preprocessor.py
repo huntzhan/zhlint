@@ -76,3 +76,9 @@ def test_list_block():
     assert 2 == len(elements)
     assert_loc(2, 4, elements[0])
     eof(elements[1])
+
+
+def test_table():
+    elements = transform(load_test_md('table.md'))
+    assert 1 == len(elements)
+    eof(elements[0])
