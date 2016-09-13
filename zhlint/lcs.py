@@ -12,6 +12,10 @@ from future.builtins.disabled import *  # noqa
 # return: marks of original x to indicate whether characters being removed or
 # not.
 def lcs_marks(x, y):
+    # reverse inputs.
+    x = list(reversed(x))
+    y = list(reversed(y))
+
     nx = len(x)
     ny = len(y)
 
@@ -45,4 +49,6 @@ def lcs_marks(x, y):
         xi -= 1
         yi -= 1
 
+    # reverse back.
+    marks = list(reversed(marks))
     return marks

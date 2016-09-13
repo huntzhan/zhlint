@@ -12,7 +12,7 @@ def test_simple():
     x = 'abbc'
     y = 'abc'
 
-    assert [True, False, True, True] == lcs_marks(x, y)
+    assert [True, True, False, True] == lcs_marks(x, y)
 
 
 def test_header():
@@ -21,4 +21,12 @@ def test_header():
 
     expected = [False] * len(x)
     expected[4:7] = [True] * 3
+    assert expected == lcs_marks(x, y)
+
+
+def test_newline():
+    x = 'a\n\nb'
+    y = 'a\nb'
+
+    expected = [True, True, False, True]
     assert expected == lcs_marks(x, y)
