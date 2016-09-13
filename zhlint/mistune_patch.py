@@ -126,6 +126,12 @@ class HackedBlockLexer(BlockLexer):
     def __init__(self, *args, **kwargs):
         super(HackedBlockLexer, self).__init__(*args, **kwargs)
         self.loc_manager = LOCStateManager()
+        self._block_level = 0
+
+    def parse_block_quote(self, m):
+        self._block_level += 1
+        super(HackedBlockLexer, self).parse_block_quote(m)
+        self._block_level -= 1
 
     def parse(self, text, rules=None):
         self.loc_manager.push()
@@ -175,11 +181,10 @@ class HackedBlockLexer(BlockLexer):
         while text:
             key, m = manipulate(text)
             if m is not False:
-                text = text[len(m.group(0)):]
-
-                if self.loc_manager.level == 1 or key == 'paragraph':
+                if self.loc_manager.level - self._block_level == 1:
                     inject_loc_and_block_type(key, m)
 
+                text = text[len(m.group(0)):]
                 continue
 
             if text:  # pragma: no cover

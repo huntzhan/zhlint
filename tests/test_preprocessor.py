@@ -64,10 +64,12 @@ def test_loc():
 def test_ref_loc():
     elements = transform(load_test_md('ref.md'))
 
-    assert 3 == len(elements)
+    assert 5 == len(elements)
     assert_loc(2, 2, elements[0])
     assert_loc(4, 4, elements[1])
-    eof(elements[2])
+    assert_loc(7, 7, elements[2])
+    assert_loc(9, 11, elements[3])
+    eof(elements[4])
 
 
 def test_list_block():
