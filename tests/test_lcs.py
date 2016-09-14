@@ -30,3 +30,12 @@ def test_newline():
 
     expected = [True, True, False, True]
     assert expected == lcs_marks(x, y)
+
+
+def test_latex():
+    x = '3. 第 (5) 步的重定向 transitions $ChildrenTrans$.\n'
+    y = '第 (5) 步的重定向 transitions $$.\n'
+    expected = [True] * len(x)
+    expected[0:3] = [False] * 3
+    expected[28:41] = [False] * (41 - 28)
+    assert expected == lcs_marks(x, y)

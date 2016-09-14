@@ -68,7 +68,7 @@ def count_offset(prefix):
 
 class TextElement(object):
 
-    def __init__(self, block_type, loc_begin, loc_end, content, offset=None):
+    def __init__(self, block_type, loc_begin, loc_end, content, offset=0):
         self.block_type = block_type
         self.loc_begin = int(loc_begin)
         self.loc_end = int(loc_end)

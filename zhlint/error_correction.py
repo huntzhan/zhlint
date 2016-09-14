@@ -50,7 +50,10 @@ class DiffOperation(object):
         return self._attrs < other._attrs
 
     def __str__(self):
-        return '<{0}>'.format(', '.join(map(str, self._attrs)))
+        TAGS = ['INSERT', 'DELETE', 'REPLACE']
+        attrs = list(self._attrs)
+        attrs[2] = TAGS[attrs[2]]
+        return '<{0}>'.format(', '.join(map(str, attrs)))
 
     def __repr__(self):
         return str(self).encode('utf-8')

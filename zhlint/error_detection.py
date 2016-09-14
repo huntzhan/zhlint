@@ -293,11 +293,22 @@ def detect_e201(element):
 
         return pattern_template.format(r'|'.join(patterns))
 
-    def split_by_e104(te):
-        return [
-            TextElement(te.block_type, te.loc_begin, te.loc_end, content)
-            for content in re.split(r'\(\d+\)', te.content, flags=re.UNICODE)
-        ]
+    def parenthesis_ranges(content):
+
+        ranges = []
+        for m in re.finditer(r'\(\d+\)', content, flags=re.UNICODE):
+            ranges.append(
+                (m.start(), m.end() - 1),
+            )
+        return ranges
+
+    def match_in_ranges(match, ranges):
+        mi = m.start()
+        mj = m.end() - 1
+        for ri, rj in ranges:
+            if ri <= mi <= rj or ri <= mj <= rj:
+                return True
+        return False
 
     LATEX_MARKS = ['$$', '\(', '\)']
 
@@ -308,47 +319,49 @@ def detect_e201(element):
 
     # prefix
     p2 = ''.join(itertools.chain(
-        marks_pattern(r'(?<={0})', LATEX_MARKS),
+        marks_pattern(r'(?:(?<={0}))', LATEX_MARKS),
         p1,
     ))
     # suffix.
     p3 = ''.join(itertools.chain(
         p1,
-        marks_pattern(r'(?={0})', LATEX_MARKS),
+        marks_pattern(r'(?:(?={0}))', LATEX_MARKS),
     ))
     # special cases: \(\).
     p4 = ''.join(itertools.chain(
-        marks_pattern(r'(?<={0})', ['\(\)']),
+        marks_pattern(r'(?:(?<={0}))', ['\(\)']),
         p1,
     ))
     # suffix.
     p5 = ''.join(itertools.chain(
         p1,
-        marks_pattern(r'(?={0})', ['\(\)']),
+        marks_pattern(r'(?:(?={0}))', ['\(\)']),
     ))
 
     patterns = [p1, p2, p3, p4, p5]
+    ranges = parenthesis_ranges(element.content)
 
-    for element in split_by_e104(element):
-        for m in detect_by_patterns(
-            patterns,
-            element,
-            ignore_matches=set(['......']),
-        ):
-            if SpecialWordHelper.delimiter_in_word(element.content, m):
-                continue
-            if delimiter_in_email(element.content, m):
-                continue
-            if delimiter_in_simple_uri(element.content, m):
-                continue
+    for m in detect_by_patterns(
+        patterns,
+        element,
+        ignore_matches=set(['......']),
+    ):
+        if match_in_ranges(m, ranges):
+            continue
+        if SpecialWordHelper.delimiter_in_word(element.content, m):
+            continue
+        if delimiter_in_email(element.content, m):
+            continue
+        if delimiter_in_simple_uri(element.content, m):
+            continue
 
-            contains_mark = False
-            for mark in LATEX_MARKS:
-                if mark in m.group(0):
-                    contains_mark = True
-                    break
-            if not contains_mark:
-                ret.append(m)
+        contains_mark = False
+        for mark in LATEX_MARKS:
+            if mark in m.group(0):
+                contains_mark = True
+                break
+        if not contains_mark:
+            ret.append(m)
 
     return ret
 

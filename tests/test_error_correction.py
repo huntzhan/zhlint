@@ -248,6 +248,11 @@ def test_correct_e201():
         DiffOperation.replace(1, 7, val='）'),
     ] == h.diffs
 
+    h = simple_init('E201', ' 步的重定向 transitions $$.')
+    assert [
+        DiffOperation.replace(1, 22, val='。'),
+    ] == h.diffs
+
 
 def test_correct_e202():
     h = simple_init('E202', 'english，test。')

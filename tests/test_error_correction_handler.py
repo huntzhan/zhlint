@@ -29,7 +29,7 @@ def load_test_md(name):
 
 
 def load_and_check(name):
-    content = load_test_md('correction_simple.md')
+    content = load_test_md(name)
     elements = transform(content)
     h = ErrorCorrectionHandler(content, elements)
     process_errors(h, elements[0])
@@ -46,3 +46,15 @@ def test_simple():
     ] == executor.diffs
 
     assert '中文，标点。\n' == executor.apply_diff_operations()
+
+
+def test_latex():
+    executor = load_and_check('correction_latex.md')
+    assert [
+        DiffOperation.replace(1, 40, val='。'),
+    ] == executor.diffs
+
+    assert (
+        '第 (5) 步的重定向 transitions $ChildrenTrans$。\n' ==
+        executor.apply_diff_operations()
+    )
