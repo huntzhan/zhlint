@@ -53,6 +53,11 @@ def generate_text_elements(text):
 
         begin = m.end()
 
+    if len(elements) >= 2:
+        if elements[-1].loc_begin - elements[-2].loc_end == 2:
+            # remove tailing newline.
+            elements[-2].content = elements[-2].content[:-1]
+
     return elements
 
 
