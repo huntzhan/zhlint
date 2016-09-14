@@ -7,6 +7,8 @@ from future.builtins.disabled import *  # noqa
 
 import os.path
 
+from mistune import preprocessing
+
 from zhlint.preprocessor import transform
 
 
@@ -17,7 +19,9 @@ DATA = os.path.join(
 
 
 def load_test_md(name):
-    return open(os.path.join(DATA, name), encoding='utf-8').read()
+    return preprocessing(
+        open(os.path.join(DATA, name), encoding='utf-8').read(),
+    )
 
 
 def eof(element):
@@ -108,3 +112,9 @@ def test_link():
         '',
     ]
     assert expected == lines
+
+
+def test_link_ending():
+    elements = transform(load_test_md('link_ending.md'))
+    assert 2 == len(elements)
+    eof(elements[1])

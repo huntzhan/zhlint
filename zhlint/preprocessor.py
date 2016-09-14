@@ -70,7 +70,8 @@ def transform(text):
     text = re.sub(r'\\\(.+?\\\)', '\\\\\(\\\\\)', text)
 
     # manually add EOF.
-    text += '\nEOF\n'
+    # doulbe \n is required for files without tailing \n.
+    text += '\n\nEOF\n'
 
     hacked_md = Markdown(
         renderer=HackedRenderer(),
