@@ -68,7 +68,7 @@ class HackedRenderer(Renderer):
         return ''
 
     def linebreak(self):
-        return ''
+        return '\n'
 
     def strikethrough(self, text):
         return text

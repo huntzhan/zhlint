@@ -118,3 +118,10 @@ def test_link_ending():
     elements = transform(load_test_md('link_ending.md'))
     assert 2 == len(elements)
     eof(elements[1])
+
+
+def test_newline():
+    elements = transform(load_test_md('newline.md'))
+    assert 2 == len(elements)
+    assert_loc(1, 5, elements[0])
+    eof(elements[1])
