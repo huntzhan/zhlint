@@ -30,8 +30,6 @@ def eof(element):
 
 def test_latex_inline():
     elements = transform(load_test_md('latex_inline.md'))
-    for e in elements:
-        print(repr(e.content))
     assert 'a line with $$ words.\n' == elements[0].content
     assert 'a line with \\(\\) words.\n' == elements[1].content
     assert '会使 $$ 加入到 $$ 中\n' == elements[2].content
@@ -125,3 +123,14 @@ def test_newline():
     assert 2 == len(elements)
     assert_loc(1, 5, elements[0])
     eof(elements[1])
+
+
+def test_nested_list():
+    elements = transform(load_test_md('nested_list.md'))
+    assert 3 == len(elements)
+
+    assert 'a 1.\nb 1.\nb 2.\na 2.\nb 3.\nb 4.\n' == elements[0].content
+    assert_loc(1, 6, elements[0])
+    assert_loc(8, 8, elements[1])
+
+    eof(elements[2])

@@ -5,6 +5,7 @@
 # from builtins import *                  # noqa
 # from future.builtins.disabled import *  # noqa
 
+import re
 
 from mistune import Renderer, BlockLexer, InlineLexer
 from zhlint.utils import count_newlines
@@ -38,7 +39,7 @@ class HackedRenderer(Renderer):
         return fmt(body)
 
     def list_item(self, text):
-        return text + '\n'
+        return text
 
     def paragraph(self, text):
         return fmt(text)
@@ -92,7 +93,7 @@ class HackedRenderer(Renderer):
         return ''
 
     def newline(self):
-        return ''
+        return '\n'
 
     def footnote_ref(self, key, index):
         return ''
@@ -127,6 +128,18 @@ class HackedBlockLexer(BlockLexer):
         super(HackedBlockLexer, self).__init__(*args, **kwargs)
         self.loc_manager = LOCStateManager()
         self._block_level = 0
+
+        # patch.
+        customized_list_item = re.compile(
+            r'^('
+            r'( *)(?:[*+-]|\d+\.) [^\n]*'
+            r'(?:\n(?!\2(?:[*+-]|\d+\.) )[^\n]*)*'
+            # including newline.
+            r'\n*'
+            r')',
+            flags=re.M
+        )
+        self.rules.list_item = customized_list_item
 
     def parse_block_quote(self, m):
         self._block_level += 1
