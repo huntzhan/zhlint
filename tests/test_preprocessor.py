@@ -129,7 +129,7 @@ def test_newline():
 
 def test_nested_list():
     elements = transform(load_test_md('nested_list.md'))
-    assert 5 == len(elements)
+    assert 7 == len(elements)
 
     assert 'a 1.\nb 1.\nb 2.\na 2.\nb 3.\nb 4.\n\n' == elements[0].content
     assert_loc(1, 7, elements[0])
@@ -139,8 +139,14 @@ def test_nested_list():
     assert 'line\n\nref line.\n\n' == elements[2].content
     assert_loc(10, 13, elements[2])
 
-    assert_loc(14, 14, elements[3])
-    eof(elements[4])
+    assert_loc(14, 15, elements[3])
+
+    assert 'line\n\n\n\n\n\n' == elements[4].content
+    assert_loc(16, 21, elements[4])
+
+    assert_loc(22, 22, elements[5])
+
+    eof(elements[6])
 
 
 def test_seperated_list():

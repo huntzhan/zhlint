@@ -23,7 +23,8 @@ class HackedRenderer(Renderer):
         return ''
 
     def block_code(self, code, lang=None):
-        return ''
+        newlines = count_newlines(code)
+        return '\n' * newlines
 
     def block_quote(self, text):
         return text
@@ -133,6 +134,12 @@ class HackedBlockGrammar(BlockGrammar):
         flags=re.M
     )
 
+    fences = re.compile(
+        r'^ *(`{3,}|~{3,}) *(\S+)? *\n'  # ```lang
+        r'([\s\S]+?)\s*'
+        r'\1 *(\n+|$)'  # ```
+    )
+
     paragraph = re.compile(
         r'^((?:[^\n]+\n?(?!'
         r'%s|%s|%s|%s|%s|%s|%s|%s|%s'
@@ -162,6 +169,13 @@ class HackedBlockLexer(BlockLexer):
         self._block_level += 1
         super(HackedBlockLexer, self).parse_block_quote(m)
         self._block_level -= 1
+
+    def parse_fences(self, m):
+        self.tokens.append({
+            'type': 'code',
+            'lang': m.group(2),
+            'text': m.group(0),
+        })
 
     def parse_paragraph(self, m):
         # including newlines.
