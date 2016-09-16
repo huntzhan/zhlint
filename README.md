@@ -86,7 +86,7 @@ LINE: 3
 
 ```
 
- ### `zhlint fix SRC [DST]`，修复文档风格
+### `zhlint fix SRC [DST]`，修复文档风格
 
 `fix` 命令会尝试修复路径为 `SRC` 的文件中出现的风格错误：
 
