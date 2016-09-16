@@ -10,7 +10,7 @@ import re
 from mistune import (
     Renderer,
     BlockGrammar, BlockLexer,
-    InlineLexer,
+    InlineGrammar, InlineLexer,
     Markdown,
     _pure_pattern, _block_tag,
 )
@@ -145,7 +145,7 @@ class HackedBlockGrammar(BlockGrammar):
         r'%s|%s|%s|%s|%s|%s|%s|%s|%s'
         # including newlines.
         r'))+\n*)' % (
-            _pure_pattern(BlockGrammar.fences).replace(r'\1', r'\2'),
+            _pure_pattern(fences).replace(r'\1', r'\2'),
             _pure_pattern(BlockGrammar.list_block).replace(r'\1', r'\3'),
             _pure_pattern(BlockGrammar.hrule),
             _pure_pattern(heading),
@@ -248,7 +248,21 @@ class HackedBlockLexer(BlockLexer):
         return self.tokens
 
 
+class HackedInlineGrammar(InlineGrammar):
+
+    code = re.compile(r'^\s*(`+)\s*([\s\S]*?[^`])\s*\1(?!`)')
+
+    text = re.compile(
+        r'^[\s\S]+?'
+        r'(?=[\\<!\[_*`~]|https?://| {2,}\n|$|%s)' % (
+            _pure_pattern(code),
+        )
+    )
+
+
 class HackedInlineLexer(InlineLexer):
+
+    grammar_class = HackedInlineGrammar
 
     def output(self, text, rules=None):
         # including newlines.
