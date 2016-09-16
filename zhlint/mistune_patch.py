@@ -7,12 +7,14 @@
 
 import re
 
-from mistune import Renderer, BlockLexer, InlineLexer
+from mistune import (
+    Renderer,
+    BlockGrammar, BlockLexer,
+    InlineLexer,
+    Markdown,
+    _pure_pattern, _block_tag,
+)
 from zhlint.utils import count_newlines
-
-
-def fmt(text):
-    return '%s\n' % text.rstrip('\n')
 
 
 class HackedRenderer(Renderer):
@@ -36,19 +38,15 @@ class HackedRenderer(Renderer):
         return ''
 
     def list(self, body, ordered=True):
-        return fmt(body)
+        return body
 
     def list_item(self, text):
         return text
 
     def paragraph(self, text):
-        return fmt(text)
+        return text
 
     def table(self, header, body):
-        # return (
-        #     '%s'
-        #     '%s'
-        # ) % (header, body)
         return ''
 
     def table_row(self, content):
@@ -56,7 +54,6 @@ class HackedRenderer(Renderer):
         return ''
 
     def table_cell(self, content, **flags):
-        # return fmt(content)
         return ''
 
     def double_emphasis(self, text):
@@ -122,6 +119,38 @@ class LOCStateManager(object):
         return len(self.loc_stack)
 
 
+class HackedBlockGrammar(BlockGrammar):
+    heading = re.compile(r'^ *(#{1,6}) *([^\n]+? *#* *(?:\n+|$))')
+    lheading = re.compile(r'^([^\n]+\n) *(=|-)+ *(?:\n+|$)')
+
+    list_item = re.compile(
+        r'^('
+        r'( *)(?:[*+-]|\d+\.) [^\n]*'
+        r'(?:\n(?!\2(?:[*+-]|\d+\.) )[^\n]*)*'
+        # including newlines.
+        r'\n*'
+        r')',
+        flags=re.M
+    )
+
+    paragraph = re.compile(
+        r'^((?:[^\n]+\n?(?!'
+        r'%s|%s|%s|%s|%s|%s|%s|%s|%s'
+        # including newlines.
+        r'))+\n*)' % (
+            _pure_pattern(BlockGrammar.fences).replace(r'\1', r'\2'),
+            _pure_pattern(BlockGrammar.list_block).replace(r'\1', r'\3'),
+            _pure_pattern(BlockGrammar.hrule),
+            _pure_pattern(heading),
+            _pure_pattern(lheading),
+            _pure_pattern(BlockGrammar.block_quote),
+            _pure_pattern(BlockGrammar.def_links),
+            _pure_pattern(BlockGrammar.def_footnotes),
+            '<' + _block_tag,
+        )
+    )
+
+
 class HackedBlockLexer(BlockLexer):
 
     def __init__(self, *args, **kwargs):
@@ -129,27 +158,27 @@ class HackedBlockLexer(BlockLexer):
         self.loc_manager = LOCStateManager()
         self._block_level = 0
 
-        # patch.
-        customized_list_item = re.compile(
-            r'^('
-            r'( *)(?:[*+-]|\d+\.) [^\n]*'
-            r'(?:\n(?!\2(?:[*+-]|\d+\.) )[^\n]*)*'
-            # including newline.
-            r'\n*'
-            r')',
-            flags=re.M
-        )
-        self.rules.list_item = customized_list_item
-
     def parse_block_quote(self, m):
         self._block_level += 1
         super(HackedBlockLexer, self).parse_block_quote(m)
         self._block_level -= 1
 
+    def parse_paragraph(self, m):
+        # including newlines.
+        text = m.group(1)
+        self.tokens.append({'type': 'paragraph', 'text': text})
+
+    def parse_newline(self, m):
+        length = len(m.group(0))
+        while length > 1:
+            self.tokens.append({'type': 'newline'})
+            length -= 1
+
     def parse(self, text, rules=None):
         self.loc_manager.push()
 
-        text = text.rstrip('\n')
+        # including newlines.
+        # text = text.rstrip('\n')
 
         if not rules:
             rules = self.default_rules
@@ -177,10 +206,8 @@ class HackedBlockLexer(BlockLexer):
             while i < n and content[i] == '\n':
                 i += 1
                 loc_begin += 1
-            i = n - 1
-            while i >= 0 and content[i] == '\n':
-                i -= 1
-                loc_end -= 1
+
+            loc_end -= 1
 
             template = '<<DOCLINT: TYPE={0}, LOC_BEGIN={1}, LOC_END={2}>>\n'
             line = template.format(
@@ -210,7 +237,9 @@ class HackedBlockLexer(BlockLexer):
 class HackedInlineLexer(InlineLexer):
 
     def output(self, text, rules=None):
+        # including newlines.
         # text = text.rstrip('\n')
+
         if not rules:
             rules = list(self.default_rules)
 
@@ -244,3 +273,90 @@ class HackedInlineLexer(InlineLexer):
                 raise RuntimeError('Infinite loop at: %s' % text)
 
         return output
+
+
+class HackedMarkdown(Markdown):
+
+    def __init__(self, *args, **kwargs):
+        super(HackedMarkdown, self).__init__(*args, **kwargs)
+        self._list_level = 0
+        self._pre_list_level = -1
+        self._token_types = set()
+
+    def _inc_list_level(self):
+        self._pre_list_level = self._list_level
+        self._list_level += 1
+
+    def _dec_list_level(self):
+        self._pre_list_level = self._list_level
+        self._list_level -= 1
+
+    def _list_level_increasing(self):
+        return (
+            self._list_level > self._pre_list_level and
+            # prefix with newline, ignore.
+            self.token['type'] != 'newline'
+        )
+
+    def _record_token_types_init(self):
+        self._token_types = set()
+
+    def _only_text_and_newline_recorded(self):
+        return not self._token_types - set(['text', 'newline'])
+
+    def tok(self):
+        self._token_types.add(self.token['type'])
+        return super(HackedMarkdown, self).tok()
+
+    def tok_text(self):
+        self._token_types.add('text')
+        return super(HackedMarkdown, self).tok_text()
+
+    def output_list_item(self):
+        self._inc_list_level()
+        body = self.renderer.placeholder()
+
+        while self.pop()['type'] != 'list_item_end':
+            self._record_token_types_init()
+
+            if self.token['type'] == 'text':
+                body += self.tok_text()
+            else:
+                body += self.tok()
+
+            if (
+                self._list_level_increasing() and
+                self._only_text_and_newline_recorded()
+            ):
+                body += '\n'
+
+        self._dec_list_level()
+        return self.renderer.list_item(body)
+
+    def output_loose_item(self):
+        self._inc_list_level()
+        body = self.renderer.placeholder()
+        while self.pop()['type'] != 'list_item_end':
+            self._record_token_types_init()
+
+            body += self.tok()
+
+            if (
+                self._list_level_increasing() and
+                self._only_text_and_newline_recorded()
+            ):
+                body += '\n'
+
+        self._dec_list_level()
+        return self.renderer.list_item(body)
+
+    def output(self, text, rules=None):
+        self.tokens = self.block(text, rules)
+        self.tokens.reverse()
+
+        self.inline.setup(self.block.def_links, self.block.def_footnotes)
+
+        out = self.renderer.placeholder()
+        while self.pop():
+            out += self.tok()
+        return out

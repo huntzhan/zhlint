@@ -25,21 +25,21 @@ def load_test_md(name):
 
 
 def eof(element):
-    assert 'EOF\n' == element.content
+    assert 'EOF' == element.content
 
 
 def test_latex_inline():
     elements = transform(load_test_md('latex_inline.md'))
-    assert 'a line with $$ words.\n' == elements[0].content
-    assert 'a line with \\(\\) words.\n' == elements[1].content
+    assert 'a line with $$ words.\n\n' == elements[0].content
+    assert 'a line with \\(\\) words.\n\n' == elements[1].content
     assert '会使 $$ 加入到 $$ 中\n' == elements[2].content
     eof(elements[3])
 
 
 def test_latex_block():
     elements = transform(load_test_md('latex_block.md'))
-    assert 'block 1\n' == elements[0].content
-    assert 'block 2\n' == elements[1].content
+    assert 'block 1\n\n\n\n' == elements[0].content
+    assert 'block 2\n\n\n\n\n\n' == elements[1].content
     eof(elements[2])
 
 
@@ -57,9 +57,9 @@ def assert_loc(begin, end, element):
 def test_loc():
     elements = transform(load_test_md('loc.md'))
 
-    assert_loc(5, 5, elements[0])
-    assert_loc(9, 11, elements[1])
-    assert_loc(16, 16, elements[2])
+    assert_loc(5, 8, elements[0])
+    assert_loc(9, 15, elements[1])
+    assert_loc(16, 17, elements[2])
     eof(elements[3])
 
 
@@ -67,10 +67,10 @@ def test_ref_loc():
     elements = transform(load_test_md('ref.md'))
 
     assert 5 == len(elements)
-    assert_loc(2, 2, elements[0])
-    assert_loc(4, 4, elements[1])
-    assert_loc(7, 7, elements[2])
-    assert_loc(9, 11, elements[3])
+    assert_loc(2, 3, elements[0])
+    assert_loc(4, 6, elements[1])
+    assert_loc(7, 8, elements[2])
+    assert_loc(9, 12, elements[3])
     eof(elements[4])
 
 
@@ -78,7 +78,7 @@ def test_list_block():
     elements = transform(load_test_md('list_block.md'))
 
     assert 3 == len(elements)
-    assert_loc(2, 6, elements[0])
+    assert_loc(2, 7, elements[0])
     assert_loc(8, 8, elements[1])
 
     eof(elements[2])
@@ -93,7 +93,7 @@ def test_table():
 def test_link():
     elements = transform(load_test_md('link.md'))
     assert 3 == len(elements)
-    assert_loc(3, 10, elements[0])
+    assert_loc(3, 11, elements[0])
     assert_loc(12, 12, elements[1])
     eof(elements[2])
 
@@ -107,6 +107,8 @@ def test_link():
         'link',
         'a',
         'this is test',
+        # this is a test\n(1)\n(2)
+        '',
         '',
     ]
     assert expected == lines
@@ -127,10 +129,31 @@ def test_newline():
 
 def test_nested_list():
     elements = transform(load_test_md('nested_list.md'))
+    assert 5 == len(elements)
+
+    assert 'a 1.\nb 1.\nb 2.\na 2.\nb 3.\nb 4.\n\n' == elements[0].content
+    assert_loc(1, 7, elements[0])
+
+    assert_loc(8, 9, elements[1])
+
+    assert 'line\n\nref line.\n\n' == elements[2].content
+    assert_loc(10, 13, elements[2])
+
+    assert_loc(14, 14, elements[3])
+    eof(elements[4])
+
+
+def test_seperated_list():
+    elements = transform(load_test_md('seperated_list.md'))
     assert 3 == len(elements)
-
-    assert 'a 1.\nb 1.\nb 2.\na 2.\nb 3.\nb 4.\n' == elements[0].content
-    assert_loc(1, 6, elements[0])
-    assert_loc(8, 8, elements[1])
-
+    assert 'line 1\n\nline 2\n\n' == elements[0].content
+    assert_loc(1, 4, elements[0])
+    assert_loc(5, 5, elements[1])
     eof(elements[2])
+
+
+def test_tailing_list():
+    elements = transform(load_test_md('tailing_list.md'))
+    assert 2 == len(elements)
+    assert_loc(1, 9, elements[0])
+    eof(elements[1])

@@ -5,6 +5,8 @@ from __future__ import (
 from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
+import sys
+
 import click
 from mistune import preprocessing
 
@@ -32,7 +34,7 @@ def check(src):
     for text_element in transform(load_file(src)):
         process_errors(display_handler, text_element)
 
-    return 0 if display_handler.detected_error else 1
+    sys.exit(0 if display_handler.detected_error else 1)
 
 
 @click.command()
@@ -54,13 +56,13 @@ def fix(src, dst):
         fixed = correction_executor.apply_diff_operations()
     except RuntimeError:
         click.echo('Something Wrong.')
-        return 1
+        sys.exit(1)
 
     if not dst:
         click.echo(fixed)
     else:
         write_file(dst, fixed)
-    return 0
+    sys.exit(0)
 
 
 @click.group()

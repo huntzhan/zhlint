@@ -7,9 +7,12 @@ from future.builtins.disabled import *  # noqa
 
 import re
 
-from mistune import Markdown
+# from mistune import Markdown
 from zhlint.mistune_patch import (
-    HackedRenderer, HackedBlockLexer, HackedInlineLexer,
+    HackedRenderer,
+    HackedBlockGrammar, HackedBlockLexer,
+    HackedInlineLexer,
+    HackedMarkdown,
     count_newlines,
 )
 from zhlint.utils import TextElement
@@ -54,9 +57,19 @@ def generate_text_elements(text):
         begin = m.end()
 
     if len(elements) >= 2:
-        if elements[-1].loc_begin - elements[-2].loc_end == 2:
-            # remove tailing newline.
-            elements[-2].content = elements[-2].content[:-1]
+        # fix the content and loc of the last element.
+        last_content = elements[-2].content
+        last_loc_end = elements[-2].loc_end
+
+        # remove 2 additional newlines.
+        last_content = last_content[:-2]
+        if last_content and last_content[-1] == '\n':
+            last_loc_end -= 2
+        else:
+            last_loc_end -= 1
+
+        elements[-2].loc_end = last_loc_end
+        elements[-2].content = last_content
 
     return elements
 
@@ -76,12 +89,12 @@ def transform(text):
 
     # manually add EOF.
     # doulbe \n is required for files without tailing \n.
-    text += '\n\nEOF\n'
+    text += '\n\nEOF'
 
-    hacked_md = Markdown(
+    hacked_md = HackedMarkdown(
         renderer=HackedRenderer(),
         inline=HackedInlineLexer,
-        block=HackedBlockLexer,
+        block=HackedBlockLexer(rules=HackedBlockGrammar()),
     )
     text = hacked_md(text)
 
