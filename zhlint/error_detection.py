@@ -37,41 +37,51 @@ ZH_SYMBOLS = (
 # 1: a.
 # 2: whitespaces.
 # 3: b.
-def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
+def single_space_patterns(
+        a, b,
+        a_join_b=True, b_join_a=True,
+        a_non_preceding='', b_non_preceding='',
+        ):
+
+    def join_non_preceding(non_preceding, text):
+        if non_preceding:
+            return r'(?:(?<!{0}))({1})'.format(non_preceding, text)
+        else:
+            return r'({0})'.format(text)
 
     # 1. no space.
     # prefix check.
-    p11 = r'({0})()({1})'
+    p11 = r'{a_component}(){b_component}'
     # suffix check.
-    p12 = r'({1})()({0})'
+    p12 = r'{b_component}(){a_component}'
 
     # 2. more than one whitespaces.
     # prefix check.
     p21 = (
-        r'({0})'
+        r'{a_component}'
         r'((?:(?!\n)\s){{2,}})'
-        r'({1})'
+        r'{b_component}'
     )
     # suffix check.
     p22 = (
-        r'({1})'
+        r'{b_component}'
         r'((?:(?!\n)\s){{2,}})'
-        r'({0})'
+        r'{a_component}'
     )
 
     # 3. wrong single whitespace: [\t\r\f\v]
     # only allow ' ' and '\n'.
     # prefix check.
     p31 = (
-        r'({0})'
+        r'{a_component}'
         r'((?:(?![ \n])\s){{1}})'
-        r'({1})'
+        r'{b_component}'
     )
     # suffix check.
     p32 = (
-        r'({1})'
+        r'{b_component}'
         r'((?:(?![ \n])\s){{1}})'
-        r'({0})'
+        r'{a_component}'
     )
 
     patterns = []
@@ -89,7 +99,11 @@ def single_space_patterns(a, b, a_join_b=True, b_join_a=True):
         ])
 
     return list(map(
-        methodcaller('format', a, b),
+        methodcaller(
+            'format',
+            a_component=join_non_preceding(a_non_preceding, a),
+            b_component=join_non_preceding(b_non_preceding, b),
+        ),
         patterns,
     ))
 
@@ -155,9 +169,10 @@ def detect_e103(element):
 
     return detect_by_patterns(
         single_space_patterns(
-            r'\d',
+            r'\d+',
             p,
             b_join_a=False,
+            a_non_preceding='\w',
         ),
         element,
     )

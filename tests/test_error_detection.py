@@ -127,6 +127,8 @@ def test_e103():
             '42。',
             'Q3',
             '136-4321-1234',
+            'word2vec',
+            'word20000vec',
         ],
         detect_e103,
         should_detected=False,
