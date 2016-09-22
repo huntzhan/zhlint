@@ -40,8 +40,7 @@ ZH_SYMBOLS = (
 def single_space_patterns(
         a, b,
         a_join_b=True, b_join_a=True,
-        a_non_preceding='', b_non_preceding='',
-        ):
+        a_non_preceding='', b_non_preceding=''):
 
     def join_non_preceding(non_preceding, text):
         if non_preceding:
