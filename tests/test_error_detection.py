@@ -308,6 +308,7 @@ def test_e201():
             '邮箱：programmer.zhx@gmail.com',
             '1.0',
             'www.google.com',
+            '链接地址 http://google.com',
         ],
         detect_e201,
         should_detected=False,

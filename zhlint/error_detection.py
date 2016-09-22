@@ -270,10 +270,17 @@ def delimiter_in_email(content, m):
 # simple url and filename.
 def delimiter_in_simple_uri(content, m):
     i = m.start()
-    if i == 0 or i == len(content) - 1 or content[i] != '.':
-        return False
-    else:
-        return content[i - 1].isalnum() and content[i + 1].isalnum()
+
+    if content[i] == '.':
+        if i == 0 or i == len(content) - 1:
+            return False
+        else:
+            return content[i - 1].isalnum() and content[i + 1].isalnum()
+
+    if content[i] == ':':
+        return i + 2 < len(content) and content[i:i + 3] == '://'
+
+    return False
 
 
 # 1: en punctuations.
@@ -282,7 +289,7 @@ def detect_e201(element):
     if not contains_chinese_characters(element.content):
         return False
 
-    PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}/')
+    PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}')
 
     def marks_pattern(pattern_template, texts):
 
