@@ -242,6 +242,13 @@ def test_correct_e201():
         DiffOperation.replace(1, 7, val='」'),
     ] == h.diffs
 
+    h = simple_init('E201', '有中文，"错误",')
+    assert [
+        DiffOperation.replace(1, 5, val='「'),
+        DiffOperation.replace(1, 8, val='」'),
+        DiffOperation.replace(1, 9, val='，'),
+    ] == h.diffs
+
     h = simple_init('E201', '有中文(错误)')
     assert [
         DiffOperation.replace(1, 4, val='（'),

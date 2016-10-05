@@ -8,7 +8,7 @@ from future.builtins.disabled import *  # noqa
 import re
 from operator import methodcaller
 from collections import defaultdict
-import itertools
+# import itertools
 
 from zhlint.utils import (
     TextElement,
@@ -297,13 +297,23 @@ def delimiter_in_simple_uri(content, m):
     return False
 
 
+def delimiter_in_latex_punctuation(content, m):
+    i = m.start()
+
+    if content[i] not in ('\\', '(', ')'):
+        return False
+
+    if content[i] == '\\':
+        return i + 1 < len(content) and content[i + 1] in ('(', ')')
+    else:
+        return 0 < i and content[i - 1] == '\\'
+
+
 # 1: en punctuations.
 # 2: whitespaces.
 def detect_e201(element):
     if not contains_chinese_characters(element.content):
         return False
-
-    PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}')
 
     def marks_pattern(pattern_template, texts):
 
@@ -331,35 +341,18 @@ def detect_e201(element):
                 return True
         return False
 
-    LATEX_MARKS = ['$$', '\(', '\)']
+    PUNCTUATIONS = set('!"$\'(),.:;<>?[\\]^_{}')
 
     ret = []
 
     # gerneral forms, ignore common shared characters: '@#%&+*-=|~'
-    p1 = r'([{0}]+)(\s*)'.format(re.escape(''.join(PUNCTUATIONS)))
+    p1 = r'({0})(\s*)'.format(
+        r'|'.join(
+            map(lambda punc: r'{0}+'.format(re.escape(punc)), PUNCTUATIONS),
+        ),
+    )
 
-    # prefix
-    p2 = ''.join(itertools.chain(
-        marks_pattern(r'(?:(?<={0}))', LATEX_MARKS),
-        p1,
-    ))
-    # suffix.
-    p3 = ''.join(itertools.chain(
-        p1,
-        marks_pattern(r'(?:(?={0}))', LATEX_MARKS),
-    ))
-    # special cases: \(\).
-    p4 = ''.join(itertools.chain(
-        marks_pattern(r'(?:(?<={0}))', ['\(\)']),
-        p1,
-    ))
-    # suffix.
-    p5 = ''.join(itertools.chain(
-        p1,
-        marks_pattern(r'(?:(?={0}))', ['\(\)']),
-    ))
-
-    patterns = [p1, p2, p3, p4, p5]
+    patterns = [p1]
     ranges = parenthesis_ranges(element.content)
 
     for m in detect_by_patterns(
@@ -375,13 +368,10 @@ def detect_e201(element):
             continue
         if delimiter_in_simple_uri(element.content, m):
             continue
+        if delimiter_in_latex_punctuation(element.content, m):
+            continue
 
-        contains_mark = False
-        for mark in LATEX_MARKS:
-            if mark in m.group(0):
-                contains_mark = True
-                break
-        if not contains_mark:
+        if m.group(1) != '$$':
             ret.append(m)
 
     return ret
