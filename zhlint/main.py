@@ -11,7 +11,7 @@ import click
 from mistune import preprocessing
 
 from zhlint.metadata import VERSION
-from zhlint.utils import load_file, write_file
+from zhlint.utils import write_file
 from zhlint.preprocessor import transform
 
 from zhlint.error_detection import process_errors
@@ -26,22 +26,22 @@ click.disable_unicode_literals_warning = True
 
 
 @click.command()
-@click.argument('src', type=click.Path(exists=True))
+@click.argument('src', type=click.File(encoding='utf-8'))
 def check(src):
 
     display_handler = ErrorDisplayHandler()
 
-    for text_element in transform(load_file(src)):
+    for text_element in transform(src.read()):
         process_errors(display_handler, text_element)
 
     sys.exit(0 if display_handler.detected_error else 1)
 
 
 @click.command()
-@click.argument('src', type=click.Path(exists=True))
+@click.argument('src', type=click.File(encoding='utf-8'))
 @click.argument('dst', default='')
 def fix(src, dst):
-    file_content = preprocessing(load_file(src))
+    file_content = preprocessing(src.read())
     text_elements = transform(file_content)
 
     correction_handler = ErrorCorrectionHandler(file_content, text_elements)
