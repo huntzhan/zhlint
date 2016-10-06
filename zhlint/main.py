@@ -6,6 +6,8 @@ from builtins import *                  # noqa
 from future.builtins.disabled import *  # noqa
 
 import sys
+import cProfile
+from functools import wraps
 
 import click
 from mistune import preprocessing
@@ -25,8 +27,25 @@ from zhlint.error_correction import (
 click.disable_unicode_literals_warning = True
 
 
+def enable_debug(func):
+
+    @click.option('--debug/--no-debug', default=False)
+    @wraps(func)
+    def wrapper(debug, *args, **kwargs):
+        if debug:
+            cProfile.runctx(
+                'func(*args, **kwargs)', globals(), locals(),
+                sort='cumtime',
+            )
+        else:
+            func(*args, **kwargs)
+
+    return wrapper
+
+
 @click.command()
 @click.argument('src', type=click.File(encoding='utf-8'))
+@enable_debug
 def check(src):
 
     display_handler = ErrorDisplayHandler()
@@ -40,6 +59,7 @@ def check(src):
 @click.command()
 @click.argument('src', type=click.File(encoding='utf-8'))
 @click.argument('dst', default='')
+@enable_debug
 def fix(src, dst):
     file_content = preprocessing(src.read())
     text_elements = transform(file_content)

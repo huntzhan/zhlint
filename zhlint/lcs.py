@@ -13,8 +13,8 @@ from future.builtins.disabled import *  # noqa
 # not.
 def lcs_marks(x, y):
     # reverse inputs.
-    x = list(reversed(x))
-    y = list(reversed(y))
+    x = tuple(reversed(x))
+    y = tuple(reversed(y))
 
     nx = len(x)
     ny = len(y)
@@ -50,5 +50,5 @@ def lcs_marks(x, y):
         yi -= 1
 
     # reverse back.
-    marks = list(reversed(marks))
+    marks = tuple(reversed(marks))
     return marks
