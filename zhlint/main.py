@@ -38,7 +38,7 @@ def enable_debug(func):
                 sort='cumtime',
             )
         else:
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
 
     return wrapper
 
@@ -53,7 +53,7 @@ def check(src):
     for text_element in transform(src.read()):
         process_errors(display_handler, text_element)
 
-    sys.exit(0 if display_handler.detected_error else 1)
+    sys.exit(0 if not display_handler.detected_error else 1)
 
 
 @click.command()
